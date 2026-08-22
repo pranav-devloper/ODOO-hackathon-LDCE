@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}500 - Server Error | GlobeTrotter{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center relative overflow-hidden bg-bg">
+  <div class="absolute inset-0 z-0">
+    <div class="absolute inset-0 bg-gradient-to-br from-bg via-bg to-tertiary/10"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03]">
+      <span class="material-symbols-outlined text-[400px]">warning</span>
+    </div>
+  </div>
+
+  <div class="relative z-10 text-center px-4 max-w-2xl mx-auto">
+    <h1 class="font-display text-[150px] md:text-[200px] font-bold text-surface-light leading-none tracking-tighter opacity-80 mb-2">500</h1>
+    
+    <div class="space-y-6">
+      <h2 class="font-display text-3xl md:text-4xl font-bold text-text-light">Turbulence Ahead</h2>
+      
+      <p class="text-lg md:text-xl text-text-muted font-light max-w-lg mx-auto">
+        Something went wrong on our end. Our engineering crew is working on it.
+      </p>
+      
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <button onclick="window.location.reload()" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 bg-primary hover:bg-primary/90 text-bg font-bold rounded-lg transition-colors">
+          <span class="material-symbols-outlined mr-2">refresh</span> TRY AGAIN
+        </button>
+        <a href="/" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 bg-surface border border-surface-light hover:border-text-muted text-text-light font-bold rounded-lg transition-colors">
+          BACK TO HOME
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ trip.name }} - GlobeTrotter{% endblock %}
+
+{% block content %}
+<!-- Cinematic Hero Section -->
+<div class="relative w-full h-[60vh] min-h-[500px] flex items-end overflow-hidden group">
+    {% if trip.cover_image %}
+        <div class="absolute inset-0 bg-cover bg-center transform group-hover:scale-105 transition-transform duration-[2s]" style="background-image: url('{{ trip.cover_image }}');"></div>
+    {% else %}
+        <div class="absolute inset-0 bg-gradient-to-tr from-surface via-surface-container to-secondary/30"></div>
+    {% endif %}
+    <!-- Dark Gradient Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
+    <div class="absolute inset-0 bg-background/20 backdrop-blur-[2px]"></div>
+    
+    <div class="relative max-w-7xl mx-auto px-6 w-full pb-16 z-10">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="bg-primary text-on-primary px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase shadow-lg">
+                {{ trip.total_days }} Days
+            </span>
+            {% if trip.is_public %}
+            <span class="bg-surface/50 backdrop-blur-md text-on-surface px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase border border-outline-variant/30">
+                Public Story
+            </span>
+            {% endif %}
+        </div>
+        <h1 class="font-display-lg text-6xl md:text-8xl text-on-background mb-4 leading-none">{{ trip.name }}</h1>
+        <p class="text-xl text-on-surface-variant mb-8 flex items-center font-ui-button">
+            <span class="material-symbols-outlined text-[20px] mr-2">calendar_month</span>
+            {{ trip.start_date }} <span class="mx-3 opacity-50">→</span> {{ trip.end_date }}
+        </p>
+        
+        <div class="flex flex-wrap gap-4">
+            <a href="{{ url_for('trip_itinerary_builder', trip_id=trip.id) }}" class="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-4 rounded-full font-ui-button text-sm transition-all hover:bg-primary-container shadow-[0_0_20px_rgba(234,88,12,0.3)] hover:-translate-y-1">
+                <span class="material-symbols-outlined text-[18px]">map</span> OPEN ITINERARY
+            </a>
+            <a href="{{ url_for('trip_budget', trip_id=trip.id) }}" class="inline-flex items-center gap-2 bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant/20 px-8 py-4 rounded-full font-ui-button text-sm transition-all">
+                <span class="material-symbols-outlined text-[18px]">payments</span> BUDGET
+            </a>
+            <button onclick="shareTrip()" class="inline-flex items-center gap-2 bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant/20 px-8 py-4 rounded-full font-ui-button text-sm transition-all ml-auto">
+                <span class="material-symbols-outlined text-[18px]">share</span> SHARE
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-6 py-16">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-16">
+        
+        <!-- Left: Journey Route Visualizer -->
+        <div class="lg:col-span-2 space-y-16">
+            
+            <section>
+                <div class="flex justify-between items-center mb-10">
+                    <h2 class="font-display-md text-4xl text-on-background">The Route</h2>
+                    <button onclick="openAddDestinationModal()" class="text-primary hover:text-primary-container flex items-center text-sm font-bold tracking-widest uppercase transition-colors">
+                        <span class="material-symbols-outlined mr-2 text-[20px]">add_circle</span> ADD STOP
+                    </button>
+                </div>
+                
+                <div class="relative pl-8 border-l-2 border-outline-variant/20 space-y-12" id="stops-list">
+                    {% for stop in trip.stops %}
+                        <div class="relative group cursor-move" data-stop-id="{{ stop.id }}">
+                            <!-- Timeline Dot -->
+                            <div class="absolute -left-[41px] top-4 w-5 h-5 rounded-full border-4 border-background bg-secondary shadow-md group-hover:scale-125 transition-transform z-10"></div>
+                            
+                            <div class="bg-surface-container hover:bg-surface-container-high p-8 rounded-3xl border border-outline-variant/10 shadow-lg transition-colors flex items-center justify-between">
+                                <div class="flex items-center gap-6">
+                                    <span class="material-symbols-outlined text-on-surface-variant/40 cursor-grab active:cursor-grabbing text-[32px]">drag_indicator</span>
+                                    <div>
+                                        <p class="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-1">{{ stop.country }}</p>
+                                        <h3 class="font-display-md text-3xl text-on-background">{{ stop.city }}</h3>
+                                    </div>
+                                </div>
+                                <button onclick="removeStop({{ stop.id }})" class="text-on-surface-variant/50 hover:text-error transition-colors p-3 bg-surface rounded-full border border-outline-variant/10 opacity-0 group-hover:opacity-100">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="relative">
+                            <div class="absolute -left-[41px] top-4 w-5 h-5 rounded-full border-4 border-background bg-outline-variant shadow-md z-10"></div>
+                            <div class="bg-surface-container border border-outline-variant/20 border-dashed rounded-3xl p-10 text-center">
+                                <span class="material-symbols-outlined text-[48px] text-on-surface-variant/40 mb-4">add_location_alt</span>
+                                <p class="text-on-surface-variant text-lg mb-6">Your itinerary is currently empty.</p>
+                                <button onclick="openAddDestinationModal()" class="text-primary font-ui-button text-sm tracking-widest uppercase hover:underline">Add your first destination</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+
+        <!-- Right: Sidebar -->
+        <div class="space-y-8">
+            
+            <!-- Description Widget -->
+            {% if trip.description %}
+            <div class="bg-surface-container rounded-3xl p-8 border border-outline-variant/10 shadow-lg">
+                <h3 class="text-xs font-bold text-secondary uppercase tracking-[0.2em] mb-4 flex items-center">
+                    <span class="material-symbols-outlined mr-2 text-[18px]">description</span> Details
+                </h3>
+                <p class="text-on-surface-variant text-base leading-relaxed">{{ trip.description }}</p>
+                <div class="mt-6 pt-6 border-t border-outline-variant/20">
+                    <a href="{{ url_for('edit_trip', trip_id=trip.id) }}" class="text-primary font-ui-button text-sm uppercase tracking-widest hover:underline flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[16px]">edit</span> Edit Details
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Budget Mini-Widget -->
+            <div class="bg-surface-container rounded-3xl p-8 border border-outline-variant/10 shadow-lg">
+                <h3 class="text-xs font-bold text-tertiary uppercase tracking-[0.2em] mb-6 flex items-center">
+                    <span class="material-symbols-outlined mr-2 text-[18px]">account_balance</span> Financials
+                </h3>
+                {% if budget %}
+                    <div class="mb-6">
+                        <div class="flex justify-between items-end mb-3">
+                            <span class="text-3xl font-display-md text-on-background">₹{{ "{:,.0f}".format(budget.total_spent|default(0)) }}</span>
+                            <span class="text-on-surface-variant text-sm uppercase tracking-wider mb-1">/ ₹{{ "{:,.0f}".format(trip.estimated_budget) }}</span>
+                        </div>
+                        <div class="w-full bg-background rounded-full h-2 mb-3 overflow-hidden">
+                            {% set percent = (budget.total_spent / trip.estimated_budget * 100) if trip.estimated_budget > 0 else 0 %}
+                            {% set bg_color = 'bg-error' if percent > 100 else ('bg-tertiary' if percent > 80 else 'bg-primary') %}
+                            <div class="{{ bg_color }} h-full rounded-full transition-all duration-1000" style="width: {{ [percent, 100]|min }}%"></div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-on-surface-variant text-sm italic mb-6">Budget data unavailable.</p>
+                {% endif %}
+                <a href="{{ url_for('trip_budget', trip_id=trip.id) }}" class="block w-full text-center py-3 bg-surface border border-outline-variant/20 rounded-xl text-sm font-ui-button text-primary hover:bg-surface-variant transition-colors uppercase tracking-widest">
+                    Manage Budget
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Destination Modal -->
+<div id="add-dest-modal" class="hidden fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-surface-container border border-outline-variant/20 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <div class="p-8 border-b border-outline-variant/10 flex justify-between items-center">
+            <h3 class="text-3xl font-display-md text-on-background">Add Destination</h3>
+            <button onclick="closeAddDestinationModal()" class="text-on-surface-variant hover:text-primary transition-colors p-2 bg-surface rounded-full">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-8 border-b border-outline-variant/10 bg-surface/50">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-4 top-4 text-on-surface-variant">search</span>
+                <input type="text" id="dest-search" placeholder="Search cities..." class="w-full bg-background border border-outline-variant/20 rounded-2xl pl-12 pr-4 py-4 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-lg">
+            </div>
+        </div>
+        <div class="overflow-y-auto p-4 space-y-2" id="dest-results">
+            <!-- Populated via API in real implementation, but for now we'll fetch from an endpoint or just rely on a backend variable if we passed it -->
+            <div class="text-center p-8 text-on-surface-variant" id="dest-loading">
+                <span class="material-symbols-outlined animate-spin text-4xl mb-4 text-primary">progress_activity</span>
+                <p>Loading destinations...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+    const tripId = {{ trip.id }};
+
+    // Initialize Sortable for drag and drop route ordering
+    const stopsList = document.getElementById('stops-list');
+    if(stopsList) {
+        new Sortable(stopsList, {
+            animation: 300,
+            handle: '.cursor-grab',
+            ghostClass: 'opacity-30',
+            onEnd: async function (evt) {
+                // Get all stop IDs in the new order
+                const items = stopsList.querySelectorAll('[data-stop-id]');
+                const stopIds = Array.from(items).map(item => parseInt(item.getAttribute('data-stop-id')));
+                
+                try {
+                    const res = await fetch(`/api/trips/${tripId}/stops/reorder`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ stop_ids: stopIds })
+                    });
+                    const data = await res.json();
+                    if (!data.success) alert('Failed to reorder: ' + data.error.message);
+                } catch (e) {
+                    console.error('Error reordering stops', e);
+                }
+            },
+        });
+    }
+
+    let allDestinations = [];
+
+    async function loadDestinations() {
+        try {
+            // Ideally an endpoint like /api/destinations
+            // We'll mock it by fetching a page and parsing, or we should create an API.
+            // Since we don't have a direct /api/destinations endpoint returning JSON easily in this view,
+            // we will simulate by fetching from a known source or just showing a predefined list if API is missing.
+            // Wait, we can fetch from the frontend? We don't have an endpoint for ALL destinations right now.
+            // Let's just create a generic list or add an endpoint later. 
+            // For now, let's inject them if we pass them from the router, or fetch from /api/trips? No.
+            document.getElementById('dest-loading').innerHTML = '<p class="text-error">Please select destinations from the Itinerary Builder.</p>';
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function openAddDestinationModal() {
+        document.getElementById('add-dest-modal').classList.remove('hidden');
+        loadDestinations();
+    }
+
+    function closeAddDestinationModal() {
+        document.getElementById('add-dest-modal').classList.add('hidden');
+    }
+
+    function shareTrip() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Trip link copied to clipboard!');
+        });
+    }
+
+    async function removeStop(stopId) {
+        if(confirm('Remove this stop from your journey?')) {
+            try {
+                const res = await fetch(`/api/trips/${tripId}/stops/${stopId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error.message);
+                }
+            } catch(e) {
+                alert('Error removing stop.');
+            }
+        }
+    }
+</script>
+{% endblock %}

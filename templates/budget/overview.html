@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Budget - {{ trip.name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-16">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 border-b border-outline-variant/20 pb-8">
+        <div>
+            <a href="{{ url_for('trip_detail', trip_id=trip.id) }}" class="text-xs font-bold text-on-surface-variant hover:text-primary uppercase tracking-widest flex items-center mb-4 transition-colors">
+                <span class="material-symbols-outlined text-[16px] mr-2">arrow_back</span> Back to Trip
+            </a>
+            <h1 class="font-display-lg text-5xl md:text-7xl text-on-background leading-none">Financials</h1>
+        </div>
+        <button onclick="openExpenseModal()" class="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-4 rounded-full font-ui-button text-sm transition-all hover:bg-primary-container shadow-[0_0_20px_rgba(234,88,12,0.3)] hover:-translate-y-1">
+            <span class="material-symbols-outlined text-[18px]">add</span> LOG EXPENSE
+        </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <!-- Budget -->
+        <div class="bg-surface-container rounded-3xl p-8 border border-outline-variant/10 shadow-lg relative overflow-hidden group hover:border-outline-variant/30 transition-colors">
+            <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-9xl">account_balance_wallet</span>
+            </div>
+            <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-2 relative z-10">Total Budget</p>
+            <h3 class="font-display-md text-4xl text-on-background relative z-10">₹{{ "{:,.0f}".format(trip.estimated_budget or 0) }}</h3>
+        </div>
+        
+        <!-- Spent -->
+        <div class="bg-surface-container rounded-3xl p-8 border border-outline-variant/10 shadow-lg relative overflow-hidden group hover:border-outline-variant/30 transition-colors">
+            <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-9xl">shopping_cart</span>
+            </div>
+            <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-2 relative z-10">Total Spent</p>
+            <h3 class="font-display-md text-4xl text-primary relative z-10">₹{{ "{:,.0f}".format(budget.total_spent if budget else 0) }}</h3>
+        </div>
+        
+        <!-- Remaining -->
+        <div class="bg-surface-container rounded-3xl p-8 border border-outline-variant/10 shadow-lg relative overflow-hidden group hover:border-outline-variant/30 transition-colors">
+            <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-9xl">savings</span>
+            </div>
+            <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-2 relative z-10">Remaining</p>
+            {% set remaining = (trip.estimated_budget or 0) - (budget.total_spent if budget else 0) %}
+            <h3 class="font-display-md text-4xl {{ 'text-error' if remaining < 0 else 'text-secondary' }} relative z-10">
+                ₹{{ "{:,.0f}".format(remaining|abs) }}
+            </h3>
+        </div>
+        
+        <!-- Status -->
+        <div class="bg-surface-container rounded-3xl p-8 border border-outline-variant/10 shadow-lg relative overflow-hidden flex flex-col justify-center group hover:border-outline-variant/30 transition-colors">
+            {% set percent = ((budget.total_spent if budget else 0) / trip.estimated_budget * 100) if trip.estimated_budget and trip.estimated_budget > 0 else 0 %}
+            <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-4 relative z-10">Status</p>
+            {% if percent > 100 %}
+                <span class="inline-flex items-center px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase bg-error-container text-on-error-container border border-error/20 w-fit relative z-10 shadow-[0_0_15px_rgba(255,180,171,0.2)]">
+                    <span class="material-symbols-outlined text-[16px] mr-2">error</span> OVER BUDGET
+                </span>
+            {% elif percent > 80 %}
+                <span class="inline-flex items-center px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase bg-tertiary-container text-on-tertiary-container border border-tertiary/20 w-fit relative z-10 shadow-[0_0_15px_rgba(167,203,115,0.2)]">
+                    <span class="material-symbols-outlined text-[16px] mr-2">warning</span> WARNING
+                </span>
+            {% else %}
+                <span class="inline-flex items-center px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase bg-primary-container text-on-primary-container border border-primary/20 w-fit relative z-10 shadow-[0_0_15px_rgba(234,88,12,0.2)]">
+                    <span class="material-symbols-outlined text-[16px] mr-2">check_circle</span> ON TRACK
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-16">
+        
+        <!-- Chart Area -->
+        <div class="lg:col-span-1 bg-surface-container rounded-3xl p-8 border border-outline-variant/10 shadow-lg flex flex-col items-center justify-center min-h-[350px]">
+            <h3 class="text-xs font-bold text-secondary uppercase tracking-[0.2em] mb-8 w-full text-left">Category Breakdown</h3>
+            <div class="w-full max-w-[280px] aspect-square relative drop-shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Categories List -->
+        <div class="lg:col-span-2 bg-surface-container rounded-3xl p-8 border border-outline-variant/10 shadow-lg">
+            <h3 class="text-xs font-bold text-secondary uppercase tracking-[0.2em] mb-8">Spending by Category</h3>
+            <div class="space-y-6">
+                <!-- Fallback Mock Categories until we plug real data -->
+                {% set categories = [
+                    {'name': 'Flights', 'icon': 'flight', 'amount': 45000, 'color': '#EA580C'},
+                    {'name': 'Accommodation', 'icon': 'hotel', 'amount': 30000, 'color': '#9C89FF'},
+                    {'name': 'Food', 'icon': 'restaurant', 'amount': 15000, 'color': '#A7CB73'},
+                    {'name': 'Activities', 'icon': 'attractions', 'amount': 10000, 'color': '#E2E8F0'}
+                ] %}
+                
+                {% for cat in categories %}
+                <div class="group">
+                    <div class="flex justify-between items-end mb-3">
+                        <div class="flex items-center text-on-background font-ui-button">
+                            <span class="material-symbols-outlined text-[20px] mr-3 p-2 rounded-lg bg-background border border-outline-variant/20 shadow-inner" style="color: {{ cat.color }}">{{ cat.icon }}</span>
+                            {{ cat.name }}
+                        </div>
+                        <span class="font-mono text-lg text-on-surface-variant">₹{{ "{:,.0f}".format(cat.amount) }}</span>
+                    </div>
+                    <div class="w-full bg-background rounded-full h-2 overflow-hidden border border-outline-variant/10 shadow-inner">
+                        <div class="h-full rounded-full transition-all duration-1000 group-hover:brightness-125" style="width: {{ (cat.amount / 100000 * 100) }}%; background-color: {{ cat.color }}; box-shadow: 0 0 10px {{ cat.color }}80;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Expenses Table -->
+    <div class="bg-surface-container rounded-3xl border border-outline-variant/10 shadow-lg overflow-hidden">
+        <div class="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-high">
+            <h3 class="text-xs font-bold text-secondary uppercase tracking-[0.2em]">Recent Expenses</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-variant/50 border-b border-outline-variant/10">
+                        <th class="px-8 py-5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Date</th>
+                        <th class="px-8 py-5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Description</th>
+                        <th class="px-8 py-5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Category</th>
+                        <th class="px-8 py-5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Amount</th>
+                        <th class="px-8 py-5"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10">
+                    <!-- Mock Data -->
+                    <tr class="hover:bg-surface-variant/50 transition-colors group">
+                        <td class="px-8 py-5 text-sm text-on-surface-variant font-medium">Aug 15, 2026</td>
+                        <td class="px-8 py-5 text-sm font-bold text-on-background">Eiffel Tower Tickets</td>
+                        <td class="px-8 py-5">
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-surface border border-outline-variant/20 text-on-surface">
+                                Activities
+                            </span>
+                        </td>
+                        <td class="px-8 py-5 text-sm font-mono text-right text-on-surface-variant">₹4,500</td>
+                        <td class="px-8 py-5 text-right">
+                            <button class="text-on-surface-variant/40 hover:text-error opacity-0 group-hover:opacity-100 transition-all bg-surface p-2 rounded-full shadow-sm">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-surface-variant/50 transition-colors group">
+                        <td class="px-8 py-5 text-sm text-on-surface-variant font-medium">Aug 14, 2026</td>
+                        <td class="px-8 py-5 text-sm font-bold text-on-background">Dinner at Le Marais</td>
+                        <td class="px-8 py-5">
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-surface border border-outline-variant/20 text-on-surface">
+                                Food
+                            </span>
+                        </td>
+                        <td class="px-8 py-5 text-sm font-mono text-right text-on-surface-variant">₹8,200</td>
+                        <td class="px-8 py-5 text-right">
+                            <button class="text-on-surface-variant/40 hover:text-error opacity-0 group-hover:opacity-100 transition-all bg-surface p-2 rounded-full shadow-sm">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts for Chart.js -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Flights', 'Accommodation', 'Food', 'Activities'],
+                datasets: [{
+                    data: [45, 30, 15, 10],
+                    backgroundColor: [
+                        '#EA580C', // Warm Orange
+                        '#9C89FF', // Violet
+                        '#A7CB73', // Mint Green
+                        '#E2E8F0'  // Slate
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 10,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#0F172A',
+                        titleColor: '#F8FAFC',
+                        bodyColor: '#CBD5E1',
+                        titleFont: { family: 'Inter', size: 12, weight: 'bold' },
+                        bodyFont: { family: 'Inter', size: 14 },
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
+                        usePointStyle: true,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.label}: ${context.raw}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+    function openExpenseModal() {
+        alert('Expense logging coming soon!');
+    }
+</script>
+{% endblock %}

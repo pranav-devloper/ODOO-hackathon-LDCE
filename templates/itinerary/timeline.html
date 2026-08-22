@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Timeline - {{ trip.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 border-b border-black/5 pb-6">
+        <div>
+            <a href="{{ url_for('trip_detail', trip_id=trip.id) }}" class="text-xs text-on-surface/50 hover:text-primary uppercase tracking-widest flex items-center mb-4 transition-colors">
+                <span class="material-symbols-outlined text-[16px] mr-1">arrow_back</span> Back to Trip
+            </a>
+            <h1 class="text-3xl md:text-5xl font-serif text-primary tracking-wide">{{ trip.name }}</h1>
+            <p class="mt-2 text-on-surface/70 font-medium tracking-wide text-sm">{{ trip.start_date.strftime('%d %b %Y') }} - {{ trip.end_date.strftime('%d %b %Y') }}</p>
+        </div>
+        
+        <!-- View Toggles -->
+        <div class="flex bg-surface-container rounded-lg border border-black/10 p-1 shadow-sm">
+            <a href="{{ url_for('trip_itinerary_builder', trip_id=trip.id) }}" class="px-4 py-2 text-xs font-medium uppercase tracking-wider rounded-md text-on-surface/60 hover:text-on-surface transition-colors flex items-center">
+                <span class="material-symbols-outlined text-[18px] mr-1">map</span> Map
+            </a>
+            <a href="{{ url_for('trip_itinerary_view', trip_id=trip.id) }}" class="px-4 py-2 text-xs font-medium uppercase tracking-wider rounded-md bg-black/5 text-on-surface flex items-center shadow-inner">
+                <span class="material-symbols-outlined text-[18px] mr-1">view_timeline</span> Timeline
+            </a>
+            <a href="{{ url_for('trip_calendar', trip_id=trip.id) }}" class="px-4 py-2 text-xs font-medium uppercase tracking-wider rounded-md text-on-surface/60 hover:text-on-surface transition-colors flex items-center">
+                <span class="material-symbols-outlined text-[18px] mr-1">calendar_month</span> Calendar
+            </a>
+        </div>
+    </div>
+
+    <!-- Timeline Content -->
+    <div class="relative pl-4 md:pl-12">
+        <!-- Main vertical line -->
+        <div class="absolute left-0 md:left-4 top-2 bottom-0 w-px bg-black/5 hidden md:block"></div>
+        
+        {% if itinerary %}
+            {% for day_date, activities in itinerary.items() %}
+            <div class="mb-12 relative">
+                <!-- Day Header -->
+                <div class="flex items-center mb-6 relative">
+                    <div class="absolute -left-4 md:-left-12 w-8 h-8 rounded-full bg-surface-container border-2 border-primary flex items-center justify-center z-10 hidden md:flex">
+                        <span class="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
+                    </div>
+                    <div class="bg-surface-container px-5 py-2.5 rounded-full border border-black/5 shadow-sm">
+                        <h2 class="text-lg font-serif text-secondary tracking-widest uppercase">
+                            Day {{ loop.index }} <span class="text-on-surface/40 mx-2">|</span> <span class="font-sans text-sm font-medium text-on-surface/80">{{ day_date }}</span>
+                        </h2>
+                    </div>
+                </div>
+
+                <!-- Activities List -->
+                <div class="space-y-4 ml-2 md:ml-6 relative">
+                    <!-- Activity line -->
+                    <div class="absolute left-[23px] top-4 bottom-4 w-px bg-black/5"></div>
+                    
+                    {% for activity in activities %}
+                    <div class="relative pl-12 group">
+                        <!-- Time Dot -->
+                        <div class="absolute left-6 top-3 w-2.5 h-2.5 bg-tertiary rounded-full transform -translate-x-1/2 border-2 border-background z-10 group-hover:scale-125 transition-transform"></div>
+                        <!-- Time Label -->
+                        <div class="absolute left-0 top-2 text-xs font-medium text-on-surface/60 w-12 text-right -ml-8">{{ activity.start_time.strftime('%H:%M') if activity.start_time else 'Any' }}</div>
+                        
+                        <div class="bg-surface-container/50 border border-black/5 rounded-xl p-4 hover:bg-surface-container transition-colors">
+                            <div class="flex justify-between items-start gap-4">
+                                <div>
+                                    <h3 class="font-medium text-on-surface text-lg">{{ activity.title }}</h3>
+                                    {% if activity.description %}
+                                        <p class="text-sm text-on-surface/60 mt-1 leading-relaxed">{{ activity.description }}</p>
+                                    {% endif %}
+                                </div>
+                                {% if activity.cost %}
+                                <div class="shrink-0 text-sm font-medium text-on-surface/80 bg-background px-2 py-1 rounded border border-black/5">
+                                    ₹{{ "{:,.0f}".format(activity.cost) }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex items-center gap-2 mt-3">
+                                <span class="text-xs uppercase tracking-wider px-2.5 py-1 rounded-md bg-black/5 text-on-surface/70 font-medium border border-black/5 flex items-center">
+                                    <span class="material-symbols-outlined text-[14px] mr-1">category</span> {{ activity.category|default('Activity') }}
+                                </span>
+                                {% if activity.location %}
+                                <span class="text-xs text-on-surface/50 flex items-center ml-2">
+                                    <span class="material-symbols-outlined text-[14px] mr-1">location_on</span> {{ activity.location }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- Empty State Mock -->
+            <div class="mb-12 relative opacity-50">
+                <div class="flex items-center mb-6 relative">
+                    <div class="absolute -left-4 md:-left-12 w-8 h-8 rounded-full bg-surface-container border-2 border-on-surface/20 flex items-center justify-center z-10 hidden md:flex"></div>
+                    <div class="bg-surface-container px-5 py-2.5 rounded-full border border-black/5">
+                        <h2 class="text-lg font-serif text-on-surface/50 tracking-widest uppercase">Day 01 <span class="mx-2">|</span> City</h2>
+                    </div>
+                </div>
+                <div class="ml-2 md:ml-6 pl-12 py-8 border border-dashed border-black/10 rounded-2xl text-center">
+                    <p class="text-on-surface/50 text-sm uppercase tracking-wider">No activities planned yet.</p>
+                    <a href="{{ url_for('trip_itinerary_builder', trip_id=trip.id) }}" class="inline-block mt-3 text-primary text-sm hover:underline">Go to Builder to add activities</a>
+                </div>
+            </div>
+        {% endif %}
+        
+    </div>
+</div>
+{% endblock %}

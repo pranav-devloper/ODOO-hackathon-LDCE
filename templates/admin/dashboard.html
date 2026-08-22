@@ -1,0 +1,195 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Dashboard - Admin Control Center{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center space-x-3">
+      <h1 class="font-display text-3xl font-bold text-on-surface">Overview</h1>
+      <span class="bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded text-xs font-bold tracking-widest">SYSTEM</span>
+    </div>
+    <div class="text-sm text-on-surface-variant">Last updated: Just now</div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-10">
+    {% set stat_cards = [
+      ('Users', stats.total_users, 'group', 'text-primary'),
+      ('Active Users', stats.active_users, 'person_check', 'text-success'),
+      ('Total Trips', stats.total_trips, 'flight', 'text-secondary'),
+      ('Public Trips', stats.total_public_trips, 'public', 'text-info'),
+      ('Destinations', stats.total_destinations, 'place', 'text-tertiary'),
+      ('Activities', stats.total_activities, 'attractions', 'text-warning')
+    ] %}
+    {% for title, value, icon, color in stat_cards %}
+    <div class="bg-surface-container-high border border-outline-variant p-6 rounded-xl shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-on-surface-variant font-medium text-xs uppercase tracking-wider">{{ title }}</h3>
+        <span class="material-symbols-outlined {{ color }} text-[20px]">{{ icon }}</span>
+      </div>
+      <p class="font-display text-3xl font-bold text-on-surface">{{ value | default(0) }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+    <!-- Charts Placeholder -->
+    <div class="bg-surface-container-high border border-outline-variant p-6 rounded-xl">
+      <h3 class="font-display text-lg font-bold text-on-surface mb-4">User Growth</h3>
+      <div id="users-chart" class="h-64 flex items-center justify-center border border-dashed border-outline-variant rounded-lg bg-surface-container-low/50">
+        <canvas id="userGrowthCanvas"></canvas>
+      </div>
+    </div>
+    <div class="bg-surface-container-high border border-outline-variant p-6 rounded-xl">
+      <h3 class="font-display text-lg font-bold text-on-surface mb-4">Platform Engagement</h3>
+      <div id="trips-chart" class="h-64 flex items-center justify-center border border-dashed border-outline-variant rounded-lg bg-surface-container-low/50">
+        <canvas id="engagementCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+    <!-- Popular Destinations -->
+    <div class="bg-surface-container-high border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+      <div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container">
+        <h3 class="font-display text-lg font-bold text-on-surface">Top Destinations</h3>
+      </div>
+      <div class="overflow-x-auto flex-grow">
+        <table class="w-full text-sm text-left">
+          <thead class="text-xs text-on-surface-variant uppercase bg-surface-container-low">
+            <tr>
+              <th class="px-6 py-3">Destination</th>
+              <th class="px-6 py-3">Country</th>
+              <th class="px-6 py-3 text-right">Trips</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant text-on-surface">
+            {% for dest in popular_destinations %}
+            <tr class="hover:bg-surface-variant/50 transition-colors">
+              <td class="px-6 py-4 font-medium">{{ dest.city }}</td>
+              <td class="px-6 py-4 text-on-surface-variant">{{ dest.country }}</td>
+              <td class="px-6 py-4 text-right font-medium text-primary">{{ dest.trip_count }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="px-6 py-4 text-center text-on-surface-variant">No data available</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Popular Activities -->
+    <div class="bg-surface-container-high border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+      <div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container">
+        <h3 class="font-display text-lg font-bold text-on-surface">Top Activities</h3>
+      </div>
+      <div class="overflow-x-auto flex-grow">
+        <table class="w-full text-sm text-left">
+          <thead class="text-xs text-on-surface-variant uppercase bg-surface-container-low">
+            <tr>
+              <th class="px-6 py-3">Activity</th>
+              <th class="px-6 py-3">Category</th>
+              <th class="px-6 py-3 text-right">Added</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant text-on-surface">
+            {% for act in popular_activities %}
+            <tr class="hover:bg-surface-variant/50 transition-colors">
+              <td class="px-6 py-4 font-medium truncate max-w-[200px]" title="{{ act.name }}">{{ act.name }}</td>
+              <td class="px-6 py-4 text-on-surface-variant capitalize">
+                <span class="bg-surface-variant px-2 py-1 rounded text-xs">{{ act.category }}</span>
+              </td>
+              <td class="px-6 py-4 text-right font-medium text-secondary">{{ act.added_count }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="px-6 py-4 text-center text-on-surface-variant">No data available</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Users -->
+  <div class="bg-surface-container-high border border-outline-variant rounded-xl overflow-hidden mb-10">
+    <div class="p-6 border-b border-outline-variant bg-surface-container">
+      <h3 class="font-display text-lg font-bold text-on-surface">Recent Users</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead class="text-xs text-on-surface-variant uppercase bg-surface-container-low">
+          <tr>
+            <th class="px-6 py-4">Name</th>
+            <th class="px-6 py-4">Email</th>
+            <th class="px-6 py-4 text-center">Trips</th>
+            <th class="px-6 py-4 text-right">Joined Date</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant text-on-surface">
+          {% for u in users %}
+          <tr class="hover:bg-surface-variant/50 transition-colors">
+            <td class="px-6 py-4 font-medium flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold text-xs">{{ u.name[0]|upper }}</div>
+              {{ u.name }}
+            </td>
+            <td class="px-6 py-4 text-on-surface-variant">{{ u.email }}</td>
+            <td class="px-6 py-4 text-center"><span class="bg-surface-variant px-2 py-1 rounded text-xs">{{ u.trips_count }}</span></td>
+            <td class="px-6 py-4 text-right text-on-surface-variant">{{ u.joined_date }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="px-6 py-8 text-center text-on-surface-variant">No users found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fake chart data just for visual effect since real timeseries isn't requested strictly for charts yet.
+    const userGrowthCtx = document.getElementById('userGrowthCanvas').getContext('2d');
+    new Chart(userGrowthCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+            datasets: [{
+                label: 'Users',
+                data: [65, 80, 110, 150, 180, 220, 250],
+                borderColor: '#d95d39',
+                backgroundColor: 'rgba(217, 93, 57, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    const engagementCtx = document.getElementById('engagementCanvas').getContext('2d');
+    new Chart(engagementCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Trips', 'Public Trips', 'Activities Added', 'Destinations Saved'],
+            datasets: [{
+                label: 'Actions',
+                data: [120, 45, 300, 150],
+                backgroundColor: ['#b78a1c', '#6b639e', '#d95d39', '#16a34a']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+<nav id="globalNavbar" class="fixed top-0 left-0 w-full z-50 transition-all duration-500 bg-transparent border-b border-transparent">
+    <div class="max-w-7xl mx-auto px-6 h-[80px] flex items-center justify-between">
+        <!-- Brand -->
+        <a href="{{ url_for('landing') }}" class="font-display-xl font-headline-md text-on-background hover:text-primary transition-colors tracking-wide">
+            GlobeTrotter
+        </a>
+        
+        <!-- Desktop Links -->
+        <div class="hidden md:flex items-center gap-10 font-label-caps uppercase tracking-[0.15em] text-on-surface-variant text-xs">
+            <a href="{{ url_for('explore_destinations') }}" class="hover:text-primary transition-colors {% if request.endpoint == 'explore_destinations' %}text-primary{% endif %}">Explore</a>
+            <a href="{{ url_for('list_trips') }}" class="hover:text-primary transition-colors {% if request.endpoint == 'list_trips' %}text-primary{% endif %}">My Trips</a>
+            <a href="{{ url_for('discover_activities') }}" class="hover:text-primary transition-colors {% if request.endpoint == 'discover_activities' %}text-primary{% endif %}">Discover</a>
+        </div>
+        
+        <!-- Auth Actions / Mobile Menu -->
+        <div class="flex items-center gap-6">
+            {% if user %}
+                <div class="relative group cursor-pointer">
+                    <div class="w-10 h-10 rounded-full bg-surface-container border border-outline-variant flex items-center justify-center overflow-hidden hover:border-primary transition-colors">
+                        {% if user.profile_image %}
+                            <img src="{{ user.profile_image }}" alt="Profile" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+                        {% endif %}
+                    </div>
+                    <div class="absolute right-0 top-full mt-2 w-56 bg-surface-container rounded-xl border border-outline-variant shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 py-2 transform origin-top-right scale-95 group-hover:scale-100">
+                        <div class="px-4 py-3 border-b border-outline-variant/50 mb-2">
+                            <p class="text-sm font-bold text-on-surface truncate">{{ user.name }}</p>
+                            <p class="text-xs text-on-surface-variant truncate">{{ user.email }}</p>
+                        </div>
+                        <a href="{{ url_for('profile') }}" class="block px-4 py-2 text-sm hover:bg-surface-variant text-on-surface transition-colors">Traveler Profile</a>
+                        {% if user.is_admin %}
+                        <a href="/admin" class="block px-4 py-2 text-sm hover:bg-surface-variant text-tertiary transition-colors">Admin Control Center</a>
+                        {% endif %}
+                        <div class="h-px bg-outline-variant/50 my-2"></div>
+                        <a href="{{ url_for('logout_page') }}" class="block px-4 py-2 text-sm hover:bg-error/10 text-error transition-colors">Logout</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login_page') }}" class="hidden sm:block text-on-surface-variant hover:text-on-background transition-colors font-ui-button text-sm tracking-wide">Login</a>
+                <a href="{{ url_for('signup_page') }}" class="bg-primary text-on-primary px-6 py-2.5 rounded-full font-ui-button text-sm hover:bg-primary-container transition-all hover:shadow-[0_0_20px_rgba(234,88,12,0.4)]">Start Journey</a>
+            {% endif %}
+            
+            <button class="md:hidden text-on-surface hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-[28px]">menu</span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<script>
+// Scroll effect for Navbar
+document.addEventListener('DOMContentLoaded', () => {
+    const nav = document.getElementById('globalNavbar');
+    if (!nav) return;
+    
+    const handleScroll = () => {
+        if (window.scrollY > 20) {
+            nav.classList.remove('bg-transparent', 'border-transparent');
+            nav.classList.add('bg-background/90', 'backdrop-blur-xl', 'border-outline-variant/30', 'shadow-lg');
+        } else {
+            nav.classList.add('bg-transparent', 'border-transparent');
+            nav.classList.remove('bg-background/90', 'backdrop-blur-xl', 'border-outline-variant/30', 'shadow-lg');
+        }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // init
+});
+</script>

@@ -1,0 +1,64 @@
+{% macro trip_card(trip, show_actions=True) %}
+<div class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden hover:border-outline transition-colors group flex flex-col h-full shadow-md">
+    <div class="h-48 relative overflow-hidden">
+        {% if trip.cover_image %}
+            <img src="{{ trip.cover_image }}" alt="{{ trip.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+        {% else %}
+            <div class="w-full h-full bg-gradient-to-tr from-surface-container-high to-surface-variant flex items-center justify-center">
+                <span class="material-symbols-outlined text-outline-variant text-[64px] opacity-20">landscape</span>
+            </div>
+        {% endif %}
+        
+        <!-- Status Badge -->
+        <div class="absolute top-4 left-4">
+            {% if trip.status == 'upcoming' %}
+                <span class="px-3 py-1 rounded-full bg-secondary-container/80 backdrop-blur text-on-secondary-container font-label-caps border border-on-secondary-container/20">Upcoming</span>
+            {% elif trip.status == 'active' %}
+                <span class="px-3 py-1 rounded-full bg-primary-container/80 backdrop-blur text-on-primary-container font-label-caps border border-on-primary-container/20 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span> Active
+                </span>
+            {% else %}
+                <span class="px-3 py-1 rounded-full bg-surface-variant/80 backdrop-blur text-on-surface-variant font-label-caps border border-outline-variant">Completed</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="p-5 flex-grow flex flex-col">
+        <h3 class="font-headline-md text-2xl leading-tight text-on-surface mb-2 line-clamp-1 group-hover:text-primary transition-colors">{{ trip.name }}</h3>
+        
+        <div class="flex items-center gap-2 text-on-surface-variant mb-4 font-body-md text-sm">
+            <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+            <span>{{ trip.start_date }} - {{ trip.end_date }}</span>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3 mb-6 mt-auto">
+            <div class="bg-surface-container-low p-3 rounded-xl border border-outline-variant/50">
+                <p class="font-label-caps text-on-surface-variant mb-1">Destinations</p>
+                <p class="font-ui-button text-on-surface flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px] text-primary">map</span>
+                    {{ trip.stops_count|default(0) }} Stops
+                </p>
+            </div>
+            <div class="bg-surface-container-low p-3 rounded-xl border border-outline-variant/50">
+                <p class="font-label-caps text-on-surface-variant mb-1">Est. Budget</p>
+                <p class="font-ui-button text-on-surface flex items-center gap-1">
+                    <span class="text-tertiary">₹</span>
+                    {{ "{:,.2f}".format(trip.estimated_budget|default(0)) }}
+                </p>
+            </div>
+        </div>
+        
+        {% if show_actions %}
+        <div class="flex gap-2 pt-4 border-t border-outline-variant/50 mt-auto">
+            <a href="{{ url_for('trip_detail', trip_id=trip.id) }}" class="flex-1 bg-surface-variant hover:bg-surface-bright text-on-surface py-2 rounded-lg font-ui-button text-center transition-colors">View</a>
+            <a href="{{ url_for('edit_trip', trip_id=trip.id) }}" class="px-3 py-2 bg-surface-container-high hover:bg-surface-variant border border-outline-variant rounded-lg text-on-surface transition-colors flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">edit</span>
+            </a>
+            <button type="button" onclick="Trips.deleteTrip({{ trip.id }}, this)" class="px-3 py-2 bg-surface-container-high hover:bg-error-container/20 border border-outline-variant hover:border-error/50 rounded-lg text-error transition-colors flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}

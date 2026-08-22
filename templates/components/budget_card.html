@@ -1,0 +1,36 @@
+{% macro budget_card(category, total, percentage, icon) %}
+<div class="bg-surface-container p-4 rounded-xl border border-outline-variant relative overflow-hidden group hover:border-outline transition-colors">
+    <!-- Background Decoration -->
+    <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+        <span class="material-symbols-outlined text-[100px]">{{ icon }}</span>
+    </div>
+    
+    <div class="relative z-10">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center text-secondary border border-outline-variant/50">
+                    <span class="material-symbols-outlined">{{ icon }}</span>
+                </div>
+                <h4 class="font-ui-button text-on-surface text-lg">{{ category }}</h4>
+            </div>
+            <div class="text-right">
+                <p class="font-label-caps text-on-surface-variant mb-1">Total</p>
+                <p class="font-headline-md text-xl leading-tight text-on-surface flex items-center gap-1">
+                    <span class="text-tertiary text-base">₹</span>{{ "{:,.2f}".format(total) }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="space-y-2 mt-4">
+            <div class="flex justify-between text-xs font-label-caps text-on-surface-variant">
+                <span>Usage</span>
+                <span>{{ percentage }}%</span>
+            </div>
+            <!-- Progress bar -->
+            <div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+                <div class="h-full rounded-full {% if percentage > 90 %}bg-error{% elif percentage > 75 %}bg-tertiary{% else %}bg-primary{% endif %} transition-all duration-1000 ease-out" style="width: {{ percentage }}%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

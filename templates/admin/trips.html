@@ -1,0 +1,110 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Trips - Admin Control Center{% endblock %}
+{% block header_title %}Trips Monitoring{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center space-x-3">
+      <h1 class="font-display text-2xl font-bold text-on-surface">Platform Trips</h1>
+      <span class="bg-primary-container text-primary px-2.5 py-0.5 rounded text-xs font-bold tracking-wider uppercase border border-primary/20">Read-Only</span>
+    </div>
+    <div class="flex gap-4">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-[20px]">search</span>
+        <input type="text" id="searchInput" placeholder="Search trips..." class="pl-10 pr-4 py-2 bg-surface-container-high border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64 text-on-surface">
+      </div>
+      <button class="flex items-center gap-2 bg-surface-container-high border border-outline-variant px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-variant transition-colors text-on-surface">
+        <span class="material-symbols-outlined text-[18px]">filter_list</span>
+        Filter
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-high border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead class="text-xs text-on-surface-variant uppercase bg-surface-container-low border-b border-outline-variant">
+          <tr>
+            <th class="px-6 py-4">Trip Name</th>
+            <th class="px-6 py-4">Owner</th>
+            <th class="px-6 py-4">Dates</th>
+            <th class="px-6 py-4 text-center">Cities</th>
+            <th class="px-6 py-4 text-center">Visibility</th>
+            <th class="px-6 py-4 text-right">Created</th>
+          </tr>
+        </thead>
+        <tbody id="tripsTableBody" class="divide-y divide-outline-variant text-on-surface">
+          <tr>
+            <td colspan="6" class="px-6 py-8 text-center text-on-surface-variant">Loading trips...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allTrips = [];
+
+async function fetchTrips() {
+    try {
+        const res = await fetch('/api/admin/trips');
+        const json = await res.json();
+        if (json.success) {
+            allTrips = json.data;
+            renderTrips(allTrips);
+        }
+    } catch (e) {
+        showAdminToast('Error', 'Failed to fetch trips', 'error');
+    }
+}
+
+function renderTrips(trips) {
+    const tbody = document.getElementById('tripsTableBody');
+    if (trips.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-on-surface-variant">No trips found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = trips.map(t => `
+        <tr class="hover:bg-surface-variant/50 transition-colors">
+            <td class="px-6 py-4 font-medium text-on-surface">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[18px]">flight_takeoff</span>
+                    ${t.name}
+                </div>
+            </td>
+            <td class="px-6 py-4 text-on-surface-variant">${t.owner}</td>
+            <td class="px-6 py-4 text-on-surface-variant text-xs">
+                ${t.start_date} <br>
+                <span class="text-outline-variant">to</span> ${t.end_date}
+            </td>
+            <td class="px-6 py-4 text-center">
+                <span class="bg-surface-variant px-2 py-1 rounded text-xs font-medium">${t.city_count}</span>
+            </td>
+            <td class="px-6 py-4 text-center">
+                ${t.is_public ? 
+                    `<span class="bg-info/10 text-info border border-info/20 px-2.5 py-1 rounded-full text-xs font-medium flex items-center justify-center gap-1 w-max mx-auto"><span class="material-symbols-outlined text-[14px]">public</span> Public</span>` : 
+                    `<span class="bg-surface-variant text-on-surface-variant px-2.5 py-1 rounded-full text-xs font-medium flex items-center justify-center gap-1 w-max mx-auto"><span class="material-symbols-outlined text-[14px]">lock</span> Private</span>`
+                }
+            </td>
+            <td class="px-6 py-4 text-right text-on-surface-variant text-xs">
+                ${t.created_at || 'N/A'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    const filtered = allTrips.filter(t => t.name.toLowerCase().includes(q) || t.owner.toLowerCase().includes(q));
+    renderTrips(filtered);
+});
+
+document.addEventListener('DOMContentLoaded', fetchTrips);
+</script>
+{% endblock %}

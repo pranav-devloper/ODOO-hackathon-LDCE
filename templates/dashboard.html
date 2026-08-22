@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<main class="min-h-screen bg-background">
+  <!-- DASHBOARD HEADER -->
+  <header class="pt-32 pb-12 bg-gradient-to-b from-surface/50 to-background border-b border-outline-variant/10">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div>
+          <p class="text-primary font-bold text-xs tracking-[0.2em] uppercase mb-4">Command Center</p>
+          <h1 class="font-display-lg text-5xl md:text-6xl text-on-background mb-4">
+            Good morning{% if user %}, <span class="italic text-on-surface-variant">{{ user.name.split(' ')[0] }}</span>{% endif %}.
+          </h1>
+          <p class="text-on-surface-variant text-xl">Where will your next journey take you?</p>
+        </div>
+        <div>
+          <a href="{{ url_for('create_trip') }}" class="inline-flex items-center gap-3 bg-primary text-on-primary hover:bg-primary-container font-ui-button px-8 py-4 rounded-full transition-all shadow-[0_0_20px_rgba(234,88,12,0.3)] hover:-translate-y-1">
+            <span class="material-symbols-outlined text-[20px]">add</span>
+            PLAN A NEW TRIP
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-6 py-16 space-y-24">
+    
+    {% if trips and trips|length > 0 %}
+    {% set featured = trips[0] %}
+    <!-- HERO: FEATURED JOURNEY -->
+    <section>
+      <div class="relative w-full h-[500px] md:h-[600px] rounded-3xl overflow-hidden group cursor-pointer shadow-2xl border border-outline-variant/20">
+        <!-- Background Image -->
+        <div class="absolute inset-0 bg-surface-container-high/40 mix-blend-overlay z-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-[#0b0f19]/80 to-transparent z-20"></div>
+        <img src="{{ featured.image_url|default('https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=2000&auto=format&fit=crop') }}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt="Featured Journey">
+        
+        <!-- Content -->
+        <div class="absolute inset-0 z-30 flex flex-col justify-between p-8 md:p-12">
+            <div class="flex justify-between items-start">
+                <span class="bg-surface/30 backdrop-blur-md border border-white/10 text-on-primary px-4 py-2 rounded-full text-xs font-bold tracking-[0.2em] uppercase">Upcoming Journey</span>
+                <span class="bg-primary text-on-primary px-4 py-2 rounded-full text-sm font-bold shadow-lg">{{ featured.days|default(7) }} Days</span>
+            </div>
+            
+            <div class="max-w-3xl">
+                <h2 class="font-display-lg text-5xl md:text-7xl text-on-primary mb-4 leading-tight">{{ featured.name|upper }}</h2>
+                <div class="flex items-center gap-4 text-on-primary/80 mb-8 font-ui-button">
+                    <span class="material-symbols-outlined">route</span>
+                    <span class="tracking-widest">{{ featured.route|default('CITY 1 → CITY 2') }}</span>
+                    <span class="opacity-50">•</span>
+                    <span>{{ featured.cities_count|default(3) }} CITIES</span>
+                    <span class="opacity-50">•</span>
+                    <span class="text-tertiary">{{ featured.budget|default('Est. Budget Pending') }}</span>
+                </div>
+                <a href="{{ url_for('trip_detail', trip_id=featured.id) }}" class="inline-flex items-center gap-3 bg-on-background text-background hover:bg-on-surface-variant font-ui-button px-8 py-4 rounded-full transition-colors">
+                    CONTINUE JOURNEY <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD SPLIT -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- NEXT UP -->
+        <div class="lg:col-span-2 bg-surface-container rounded-3xl p-8 md:p-10 border border-outline-variant/10 shadow-lg relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-8 opacity-10">
+                <span class="material-symbols-outlined text-[120px]">explore</span>
+            </div>
+            <h3 class="font-display-md text-3xl text-on-background mb-2 relative z-10">Next Up</h3>
+            <p class="text-on-surface-variant mb-8 relative z-10">Your next scheduled activity.</p>
+            
+            <div class="flex items-center gap-6 bg-surface p-6 rounded-2xl border border-outline-variant/20 relative z-10">
+                <div class="w-16 h-16 rounded-xl bg-primary-container text-primary flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[32px]">museum</span>
+                </div>
+                <div>
+                    <p class="text-primary text-xs font-bold tracking-widest uppercase mb-1">Tomorrow • 10:00 AM</p>
+                    <h4 class="text-xl font-bold text-on-background">Louvre Museum Tour</h4>
+                    <p class="text-on-surface-variant text-sm">Paris, France</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- BUDGET HEALTH -->
+        <div class="bg-surface-container rounded-3xl p-8 md:p-10 border border-outline-variant/10 shadow-lg flex flex-col justify-center">
+            <h3 class="font-display-md text-3xl text-on-background mb-2">Budget Health</h3>
+            <p class="text-on-surface-variant mb-8">Overall remaining balance.</p>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-end">
+                    <span class="text-3xl font-bold text-tertiary">₹17,500</span>
+                    <span class="text-sm text-on-surface-variant uppercase tracking-widest">Remaining</span>
+                </div>
+                <div class="w-full h-2 bg-background rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-success to-tertiary" style="width: 65%;"></div>
+                </div>
+                <div class="flex justify-between text-xs text-on-surface-variant font-bold">
+                    <span>SPENT: ₹67,000</span>
+                    <span>TOTAL: ₹84,500</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    {% else %}
+    <!-- EMPTY STATE HERO -->
+    <section class="bg-surface-container rounded-3xl p-12 md:p-24 text-center border border-outline-variant/10 shadow-xl flex flex-col items-center relative overflow-hidden">
+        <div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: radial-gradient(circle at 50% 50%, #ffffff 2px, transparent 2px); background-size: 40px 40px;"></div>
+        <div class="w-24 h-24 bg-surface rounded-full flex items-center justify-center mb-8 border border-outline-variant/20 shadow-lg relative z-10">
+            <span class="material-symbols-outlined text-[40px] text-primary">luggage</span>
+        </div>
+        <h3 class="font-display-lg text-4xl md:text-5xl text-on-background mb-4 relative z-10">Your journey begins here.</h3>
+        <p class="text-on-surface-variant text-lg max-w-lg mx-auto mb-10 relative z-10">You haven't planned any trips yet. Create your first itinerary to start building your travel story.</p>
+        <a href="{{ url_for('create_trip') }}" class="bg-primary text-on-primary font-ui-button rounded-full px-10 py-4 hover:bg-primary-container transition-colors shadow-lg relative z-10">
+            PLAN YOUR FIRST TRIP
+        </a>
+    </section>
+    {% endif %}
+
+    <!-- DISCOVER FOR YOU -->
+    <section>
+      <div class="flex items-center justify-between mb-10">
+        <h2 class="font-display-md text-3xl text-on-surface">DISCOVER FOR YOU</h2>
+        <a href="{{ url_for('explore_destinations') }}" class="text-primary hover:text-primary-container transition-colors text-sm font-bold tracking-widest uppercase flex items-center gap-2">
+          Explore All <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+        </a>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% set recs = recommendations if recommendations else [
+          {'name': 'Tokyo', 'country': 'Japan', 'index': '$$$'},
+          {'name': 'Bali', 'country': 'Indonesia', 'index': '$'},
+          {'name': 'Rome', 'country': 'Italy', 'index': '$$'},
+          {'name': 'Cape Town', 'country': 'South Africa', 'index': '$$'}
+        ] %}
+        
+        {% for dest in recs %}
+        <div class="group relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer shadow-lg">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-[#0b0f19]/40 to-transparent z-10"></div>
+          <img src="{{ dest.image_url|default('https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=500&q=80') }}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="{{ dest.name }}">
+          <div class="absolute inset-0 z-20 p-6 flex flex-col justify-end">
+            <p class="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-1">{{ dest.country }}</p>
+            <h3 class="font-display-md text-3xl text-on-background mb-4">{{ dest.name }}</h3>
+            <div class="transform translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                <button class="w-full py-3 rounded-full bg-surface/20 backdrop-blur-md border border-white/20 text-on-primary font-ui-button text-sm hover:bg-white hover:text-black transition-colors">
+                    EXPLORE CITY
+                </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- YOUR RECENT JOURNEYS -->
+    {% if trips and trips|length > 1 %}
+    <section>
+        <div class="flex items-center justify-between mb-10">
+            <h2 class="font-display-md text-3xl text-on-surface">YOUR RECENT JOURNEYS</h2>
+            <a href="{{ url_for('list_trips') }}" class="text-primary hover:text-primary-container transition-colors text-sm font-bold tracking-widest uppercase flex items-center gap-2">
+                View All <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </a>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for trip in trips[1:4] %}
+            <a href="{{ url_for('trip_detail', trip_id=trip.id) }}" class="bg-surface-container rounded-2xl border border-outline-variant/10 overflow-hidden group hover:border-outline-variant/30 transition-all shadow-md hover:shadow-xl block">
+                <div class="h-48 relative overflow-hidden">
+                    <img src="{{ trip.image_url|default('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&q=80') }}" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt="Trip Cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-surface-container to-transparent"></div>
+                </div>
+                <div class="p-6 relative">
+                    <div class="absolute -top-6 right-6 bg-surface border border-outline-variant/20 px-3 py-1 rounded-full text-xs font-bold text-on-surface shadow-sm">
+                        {{ trip.days|default(7) }} Days
+                    </div>
+                    <h3 class="font-display-md text-2xl text-on-background mb-2">{{ trip.name }}</h3>
+                    <p class="text-on-surface-variant text-sm mb-4 font-ui-button flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px] text-secondary">route</span>
+                        {{ trip.route | default('City 1 → City 2') }}
+                    </p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    
+  </div>
+</main>
+{% endblock %}
