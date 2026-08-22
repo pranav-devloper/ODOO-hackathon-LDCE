@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+  .auth-bg {
+    background-color: #0b0914;
+    background-image: radial-gradient(circle at 80% 20%, rgba(45, 27, 61, 0.4) 0%, transparent 50%),
+                      radial-gradient(circle at 20% 80%, rgba(20, 19, 16, 0.8) 0%, transparent 50%),
+                      linear-gradient(180deg, #100b16 0%, #1a1721 100%);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-bg min-h-screen flex items-center justify-center p-6 relative py-12">
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-secondary/10 blur-[100px] rounded-full pointer-events-none"></div>
+  
+  <div class="w-full max-w-md bg-surface-container/80 backdrop-blur-xl border border-black/5 rounded-3xl p-8 md:p-10 shadow-2xl relative z-10">
+    <div class="text-center mb-8">
+      <h1 class="font-display text-3xl tracking-widest text-primary font-bold mb-2">GLOBETROTTER</h1>
+      <p class="text-muted font-ui">Begin your adventure.</p>
+    </div>
+
+    <div id="signup-error" class="hidden mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-start gap-2">
+      <span class="material-symbols-outlined text-base mt-0.5">error</span>
+      <span class="error-msg">An error occurred during signup.</span>
+    </div>
+
+    <form id="signup-form" class="space-y-5">
+      <div>
+        <label for="name" class="block text-sm font-medium text-text mb-2">Full Name</label>
+        <input type="text" id="name" name="name" required minlength="2"
+               class="w-full bg-surface-lowest border border-black/10 rounded-xl px-4 py-3 text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+               placeholder="Alex Traveler">
+      </div>
+
+      <div>
+        <label for="email" class="block text-sm font-medium text-text mb-2">Email Address</label>
+        <input type="email" id="email" name="email" required
+               class="w-full bg-surface-lowest border border-black/10 rounded-xl px-4 py-3 text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+               placeholder="traveler@example.com">
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-text mb-2">Password</label>
+        <input type="password" id="password" name="password" required minlength="6"
+               class="w-full bg-surface-lowest border border-black/10 rounded-xl px-4 py-3 text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+               placeholder="••••••••">
+      </div>
+
+      <div>
+        <label for="confirm_password" class="block text-sm font-medium text-text mb-2">Confirm Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" required
+               class="w-full bg-surface-lowest border border-black/10 rounded-xl px-4 py-3 text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+               placeholder="••••••••">
+      </div>
+
+      <button type="submit" class="w-full bg-primary text-on-primary hover:bg-[#e6a292] font-bold rounded-xl px-4 py-4 mt-2 transition-all shadow-[0_0_15px_rgba(255,180,162,0.2)] flex items-center justify-center gap-2 group">
+        <span>CREATE ACCOUNT</span>
+        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">person_add</span>
+      </button>
+    </form>
+
+    <div class="mt-8 text-center border-t border-black/10 pt-6">
+      <p class="text-sm text-muted">
+        Already have an account? 
+        <a href="{{ url_for('login_page') }}" class="text-primary font-semibold hover:underline">SIGN IN</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const errorDiv = document.getElementById('signup-error');
+    const errorMsg = errorDiv.querySelector('.error-msg');
+    
+    // Hide error
+    errorDiv.classList.add('hidden');
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    if (data.password !== data.confirm_password) {
+      errorMsg.textContent = 'Passwords do not match.';
+      errorDiv.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        window.location.href = '/dashboard';
+      } else {
+        errorMsg.textContent = result.error?.message || 'Registration failed. Please try again.';
+        errorDiv.classList.remove('hidden');
+      }
+    } catch (err) {
+      errorMsg.textContent = 'A network error occurred. Please try again.';
+      errorDiv.classList.remove('hidden');
+    }
+  });
+</script>
+{% endblock %}

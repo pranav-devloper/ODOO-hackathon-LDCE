@@ -1,0 +1,152 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Explore - GlobeTrotter{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+  <div class="mb-12">
+    <h1 class="font-display text-4xl md:text-5xl font-bold tracking-tight text-text-light mb-6">EXPLORE THE WORLD</h1>
+    
+    <!-- Search Bar -->
+    <div class="relative max-w-3xl mb-8">
+      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+        <span class="material-symbols-outlined text-text-muted">search</span>
+      </div>
+      <input type="text" id="searchInput" class="block w-full pl-12 pr-4 py-4 bg-surface border border-surface-light rounded-lg text-text-light placeholder-text-muted focus:ring-primary focus:border-primary sm:text-lg transition-colors" placeholder="Search cities, countries...">
+    </div>
+
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-4 items-center">
+      <select id="countryFilter" class="bg-surface border border-surface-light rounded-md py-2 pl-3 pr-10 text-text-light focus:ring-primary focus:border-primary">
+        <option value="">All Countries</option>
+        {% for country in countries %}
+        <option value="{{ country }}">{{ country }}</option>
+        {% endfor %}
+      </select>
+      
+      <select id="regionFilter" class="bg-surface border border-surface-light rounded-md py-2 pl-3 pr-10 text-text-light focus:ring-primary focus:border-primary">
+        <option value="">All Regions</option>
+        {% for region in regions %}
+        <option value="{{ region }}">{{ region }}</option>
+        {% endfor %}
+      </select>
+
+      <div class="flex items-center space-x-2 bg-surface border border-surface-light rounded-md p-1">
+        <span class="text-sm text-text-muted px-2">Cost:</span>
+        <div class="flex space-x-1" id="costFilters">
+          {% for i in range(1, 6) %}
+          <button data-cost="{{ i }}" class="px-2 h-8 rounded hover:bg-surface-light text-text-muted flex items-center justify-center transition-colors filter-cost">
+            {{ '₹' * i }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <select id="sortFilter" class="bg-surface border border-surface-light rounded-md py-2 pl-3 pr-10 text-text-light focus:ring-primary focus:border-primary ml-auto">
+        <option value="popular">Most Popular</option>
+        <option value="name_asc">Name (A-Z)</option>
+        <option value="cost_asc">Cost (Low to High)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loadingState" class="hidden py-12 flex justify-center items-center">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="emptyState" class="hidden py-24 text-center">
+    <span class="material-symbols-outlined text-6xl text-text-muted mb-4">travel_explore</span>
+    <h3 class="text-xl font-display text-text-light mb-2">No destinations found</h3>
+    <p class="text-text-muted">Try adjusting your filters or search term.</p>
+  </div>
+
+  <!-- Results Grid -->
+  <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    {% for dest in destinations %}
+    <div class="group relative rounded-xl overflow-hidden bg-surface border border-surface-light hover:border-primary transition-all duration-300">
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="p-6 relative z-10">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h3 class="font-display text-2xl font-bold text-text-light">{{ dest.name }}</h3>
+            <p class="text-text-muted flex items-center mt-1">
+              <span class="material-symbols-outlined text-sm mr-1">location_on</span>
+              {{ dest.country }}
+            </p>
+          </div>
+          <button class="text-text-muted hover:text-primary transition-colors focus:outline-none" title="Save Destination">
+            <span class="material-symbols-outlined text-2xl">favorite</span>
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between mt-6">
+          <div class="flex items-center text-tertiary font-bold tracking-widest text-sm">
+            {{ '$' * dest.cost_index }}<span class="text-surface-light">{{ '$' * (5 - dest.cost_index) }}</span>
+          </div>
+          <div class="w-24 bg-surface-light rounded-full h-2">
+            <div class="bg-primary h-2 rounded-full" style="width: {{ dest.popularity_score | default(50) }}%"></div>
+          </div>
+        </div>
+        
+        <div class="mt-8">
+          <a href="#" onclick="alert('Destination details coming soon!'); return false;" class="block w-full text-center bg-surface-light hover:bg-primary hover:text-bg text-text-light font-medium py-3 rounded-lg transition-colors">
+            EXPLORE
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  // Simple JS for UI interactions; real API calls would use fetch
+  document.addEventListener('DOMContentLoaded', () => {
+    let timeout = null;
+    const searchInput = document.getElementById('searchInput');
+    const loadingState = document.getElementById('loadingState');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const emptyState = document.getElementById('emptyState');
+    const costBtns = document.querySelectorAll('.filter-cost');
+    let activeCost = null;
+
+    costBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        // Toggle active state
+        if (activeCost === btn.dataset.cost) {
+          activeCost = null;
+          costBtns.forEach(b => b.classList.remove('bg-primary/20', 'text-primary'));
+        } else {
+          activeCost = btn.dataset.cost;
+          costBtns.forEach(b => b.classList.remove('bg-primary/20', 'text-primary'));
+          btn.classList.add('bg-primary/20', 'text-primary');
+        }
+        triggerSearch();
+      });
+    });
+
+    ['countryFilter', 'regionFilter', 'sortFilter'].forEach(id => {
+      document.getElementById(id).addEventListener('change', triggerSearch);
+    });
+
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(triggerSearch, 300);
+    });
+
+    function triggerSearch() {
+      // Simulate API call
+      resultsGrid.classList.add('opacity-50');
+      loadingState.classList.remove('hidden');
+      
+      setTimeout(() => {
+        resultsGrid.classList.remove('opacity-50');
+        loadingState.classList.add('hidden');
+        // In a real app, update DOM here based on fetch response
+      }, 500);
+    }
+  });
+</script>
+{% endblock %}

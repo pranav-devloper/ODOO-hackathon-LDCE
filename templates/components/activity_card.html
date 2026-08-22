@@ -1,0 +1,43 @@
+{% macro activity_card(activity, show_add=False, trip_id=None) %}
+<div class="bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 hover:border-outline-variant rounded-xl p-4 transition-all flex gap-4 group">
+    <!-- Icon -->
+    <div class="w-12 h-12 rounded-lg bg-surface-variant flex items-center justify-center shrink-0 group-hover:bg-primary-container/10 group-hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-[24px]">{{ activity.icon|default('local_activity') }}</span>
+    </div>
+    
+    <!-- Details -->
+    <div class="flex-grow min-w-0">
+        <div class="flex justify-between items-start gap-2 mb-1">
+            <h4 class="font-ui-button text-on-surface truncate text-base">{{ activity.name }}</h4>
+            {% if activity.rating %}
+            <div class="flex items-center gap-1 shrink-0 bg-surface-container-highest px-2 py-0.5 rounded-full">
+                <span class="material-symbols-outlined text-[14px] text-tertiary-fixed-dim">star</span>
+                <span class="font-label-caps text-[10px] text-on-surface">{{ activity.rating }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <p class="font-body-md text-sm text-on-surface-variant line-clamp-2 mb-3">{{ activity.description }}</p>
+        
+        <div class="flex flex-wrap gap-2 mt-auto">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-variant text-on-surface-variant text-xs font-medium border border-outline-variant/30">
+                <span class="material-symbols-outlined text-[14px]">schedule</span>
+                {{ activity.duration }}
+            </span>
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-variant text-on-surface-variant text-xs font-medium border border-outline-variant/30">
+                <span class="material-symbols-outlined text-[14px]">payments</span>
+                {{ activity.cost_badge|default('$$') }}
+            </span>
+        </div>
+    </div>
+    
+    <!-- Add Button -->
+    {% if show_add %}
+    <div class="shrink-0 flex items-center ml-2">
+        <button type="button" onclick="alert('Feature coming soon: Add to Itinerary');" class="w-10 h-10 rounded-full bg-surface-variant hover:bg-primary hover:text-on-primary text-on-surface flex items-center justify-center transition-colors shadow-sm">
+            <span class="material-symbols-outlined">add</span>
+        </button>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

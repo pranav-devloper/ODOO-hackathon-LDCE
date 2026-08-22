@@ -1,0 +1,157 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Analytics - Admin Control Center{% endblock %}
+{% block header_title %}Platform Analytics{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+  <div class="flex items-center justify-between mb-2">
+    <h1 class="font-display text-2xl font-bold text-on-surface">Data Insights</h1>
+    <button class="bg-primary-container text-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-container/80 transition-colors flex items-center gap-2">
+      <span class="material-symbols-outlined text-[18px]">download</span> Export Report
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="bg-surface-container-high border border-outline-variant p-6 rounded-xl shadow-sm">
+      <h3 class="font-display text-lg font-bold text-on-surface mb-6">Popular Destinations</h3>
+      <div class="h-72">
+        <canvas id="destChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="bg-surface-container-high border border-outline-variant p-6 rounded-xl shadow-sm">
+      <h3 class="font-display text-lg font-bold text-on-surface mb-6">Activity Categories</h3>
+      <div class="h-72">
+        <canvas id="catChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="bg-surface-container-high border border-outline-variant p-6 rounded-xl shadow-sm col-span-1 md:col-span-2">
+      <h3 class="font-display text-lg font-bold text-on-surface mb-6">Engagement Overview</h3>
+      <div class="h-64">
+        <canvas id="engagementChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="bg-surface-container-high border border-outline-variant p-6 rounded-xl shadow-sm flex flex-col">
+      <h3 class="font-display text-lg font-bold text-on-surface mb-6">Platform Distribution</h3>
+      
+      <div class="flex-1 flex flex-col justify-center space-y-6">
+        <div>
+            <div class="flex justify-between text-sm mb-1">
+                <span class="text-on-surface-variant font-medium">Active Users</span>
+                <span class="text-on-surface font-bold">{{ analytics.users.active }} / {{ analytics.users.total }}</span>
+            </div>
+            <div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+                {% set user_pct = (analytics.users.active / analytics.users.total * 100) if analytics.users.total > 0 else 0 %}
+                <div class="h-full bg-success" style="width: {{ user_pct }}%"></div>
+            </div>
+        </div>
+        
+        <div>
+            <div class="flex justify-between text-sm mb-1">
+                <span class="text-on-surface-variant font-medium">Public Trips</span>
+                <span class="text-on-surface font-bold">{{ analytics.trips.public }} / {{ analytics.trips.total }}</span>
+            </div>
+            <div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+                {% set trip_pct = (analytics.trips.public / analytics.trips.total * 100) if analytics.trips.total > 0 else 0 %}
+                <div class="h-full bg-info" style="width: {{ trip_pct }}%"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inject real analytics data from server
+    const destLabels = {{ analytics.destinations.labels | tojson }};
+    const destData = {{ analytics.destinations.data | tojson }};
+    
+    const catLabels = {{ analytics.categories.labels | tojson }};
+    const catData = {{ analytics.categories.data | tojson }};
+
+    // Chart Defaults
+    Chart.defaults.color = '#5a5752'; // text-on-surface-variant
+    Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+
+    // Destinations Bar Chart
+    new Chart(document.getElementById('destChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: destLabels.length ? destLabels : ['No Data'],
+            datasets: [{
+                label: 'Trip Stops',
+                data: destData.length ? destData : [0],
+                backgroundColor: '#d95d39', // primary
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(208, 204, 195, 0.2)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Categories Doughnut Chart
+    new Chart(document.getElementById('catChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: catLabels.length ? catLabels : ['No Data'],
+            datasets: [{
+                data: catData.length ? catData : [1],
+                backgroundColor: ['#d95d39', '#b78a1c', '#6b639e', '#16a34a', '#2563eb', '#d97706'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'right' } }
+        }
+    });
+
+    // Engagement Overview (Static for now since it requires timeseries)
+    new Chart(document.getElementById('engagementChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            datasets: [
+                {
+                    label: 'New Trips',
+                    data: [12, 19, 15, 25],
+                    borderColor: '#b78a1c', // tertiary
+                    tension: 0.4,
+                    borderWidth: 2
+                },
+                {
+                    label: 'Active Users',
+                    data: [30, 45, 42, 60],
+                    borderColor: '#6b639e', // secondary
+                    tension: 0.4,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(208, 204, 195, 0.2)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

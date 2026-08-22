@@ -1,0 +1,205 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Destinations - Admin Control Center{% endblock %}
+{% block header_title %}Destinations Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center space-x-3">
+      <h1 class="font-display text-2xl font-bold text-on-surface">Platform Destinations</h1>
+    </div>
+    <div class="flex gap-4">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-[20px]">search</span>
+        <input type="text" id="searchInput" placeholder="Search destinations..." class="pl-10 pr-4 py-2 bg-surface-container-high border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64 text-on-surface">
+      </div>
+      <button onclick="openModal()" class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-container transition-colors shadow-sm">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Add Destination
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-high border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead class="text-xs text-on-surface-variant uppercase bg-surface-container-low border-b border-outline-variant">
+          <tr>
+            <th class="px-6 py-4">City</th>
+            <th class="px-6 py-4">Country</th>
+            <th class="px-6 py-4 text-center">Popularity</th>
+            <th class="px-6 py-4 text-right">Trip Usage</th>
+            <th class="px-6 py-4 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="destTableBody" class="divide-y divide-outline-variant text-on-surface">
+          <tr>
+            <td colspan="5" class="px-6 py-8 text-center text-on-surface-variant">Loading destinations...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="destModal" class="fixed inset-0 bg-on-background/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-xl max-w-md w-full p-6">
+        <h3 id="modalTitle" class="text-xl font-display font-bold text-on-surface mb-4">Add Destination</h3>
+        <form id="destForm" onsubmit="saveDest(event)">
+            <input type="hidden" id="destId">
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1">City</label>
+                    <input type="text" id="cityInput" required class="w-full px-3 py-2 bg-surface-container border border-outline-variant rounded focus:outline-none focus:border-primary text-on-surface">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1">Country</label>
+                    <input type="text" id="countryInput" required class="w-full px-3 py-2 bg-surface-container border border-outline-variant rounded focus:outline-none focus:border-primary text-on-surface">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1">Region</label>
+                    <input type="text" id="regionInput" class="w-full px-3 py-2 bg-surface-container border border-outline-variant rounded focus:outline-none focus:border-primary text-on-surface">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal()" class="px-4 py-2 text-on-surface-variant hover:bg-surface-variant rounded font-medium text-sm transition-colors">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-primary text-on-primary rounded font-medium text-sm hover:bg-primary-container transition-colors shadow-sm">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allDests = [];
+
+async function fetchDests() {
+    try {
+        const res = await fetch('/api/admin/destinations');
+        const json = await res.json();
+        if (json.success) {
+            allDests = json.data;
+            renderDests(allDests);
+        }
+    } catch (e) {
+        showAdminToast('Error', 'Failed to fetch destinations', 'error');
+    }
+}
+
+function renderDests(dests) {
+    const tbody = document.getElementById('destTableBody');
+    if (dests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-on-surface-variant">No destinations found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = dests.map(d => `
+        <tr class="hover:bg-surface-variant/50 transition-colors">
+            <td class="px-6 py-4 font-medium text-on-surface">${d.city}</td>
+            <td class="px-6 py-4 text-on-surface-variant">${d.country} <span class="text-xs opacity-70 ml-1">(${d.region || 'N/A'})</span></td>
+            <td class="px-6 py-4 text-center">
+                <div class="w-16 h-2 bg-surface-variant rounded-full mx-auto overflow-hidden">
+                    <div class="h-full bg-primary" style="width: ${d.popularity}%"></div>
+                </div>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="bg-surface-variant px-2 py-1 rounded text-xs font-medium mr-2" title="Trips">${d.usage_count}</span>
+                <span class="bg-secondary-container text-secondary px-2 py-1 rounded text-xs font-medium" title="Saves">${d.saved_count}</span>
+            </td>
+            <td class="px-6 py-4 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <button onclick="editDest(${d.id})" class="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary-container rounded transition-colors" title="Edit">
+                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                    <button onclick="deleteDest(${d.id})" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded transition-colors" title="Delete">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function openModal() {
+    document.getElementById('modalTitle').innerText = 'Add Destination';
+    document.getElementById('destForm').reset();
+    document.getElementById('destId').value = '';
+    document.getElementById('destModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('destModal').classList.add('hidden');
+}
+
+function editDest(id) {
+    const dest = allDests.find(d => d.id === id);
+    if (dest) {
+        document.getElementById('modalTitle').innerText = 'Edit Destination';
+        document.getElementById('destId').value = dest.id;
+        document.getElementById('cityInput').value = dest.city;
+        document.getElementById('countryInput').value = dest.country;
+        document.getElementById('regionInput').value = dest.region || '';
+        document.getElementById('destModal').classList.remove('hidden');
+    }
+}
+
+async function saveDest(e) {
+    e.preventDefault();
+    const id = document.getElementById('destId').value;
+    const data = {
+        city: document.getElementById('cityInput').value,
+        country: document.getElementById('countryInput').value,
+        region: document.getElementById('regionInput').value
+    };
+    
+    const url = id ? `/api/admin/destinations/${id}` : '/api/admin/destinations';
+    const method = id ? 'PUT' : 'POST';
+    
+    try {
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.success) {
+            showAdminToast('Success', json.message, 'success');
+            closeModal();
+            fetchDests();
+        } else {
+            showAdminToast('Error', json.detail || 'Failed to save', 'error');
+        }
+    } catch (e) {
+        showAdminToast('Error', 'Request failed', 'error');
+    }
+}
+
+async function deleteDest(id) {
+    if (confirm('Are you sure you want to delete this destination?')) {
+        try {
+            const res = await fetch(`/api/admin/destinations/${id}`, { method: 'DELETE' });
+            const json = await res.json();
+            if (json.success) {
+                showAdminToast('Success', json.message, 'success');
+                fetchDests();
+            } else {
+                showAdminToast('Error', json.detail || 'Failed to delete', 'error');
+            }
+        } catch (e) {
+            showAdminToast('Error', 'Request failed', 'error');
+        }
+    }
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    const filtered = allDests.filter(d => d.city.toLowerCase().includes(q) || d.country.toLowerCase().includes(q));
+    renderDests(filtered);
+});
+
+document.addEventListener('DOMContentLoaded', fetchDests);
+</script>
+{% endblock %}

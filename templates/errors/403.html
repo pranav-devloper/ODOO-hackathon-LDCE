@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}403 - Forbidden | GlobeTrotter{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center relative overflow-hidden bg-bg">
+  <div class="absolute inset-0 z-0">
+    <div class="absolute inset-0 bg-gradient-to-br from-bg via-bg to-secondary/10"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03]">
+      <span class="material-symbols-outlined text-[400px]">lock</span>
+    </div>
+  </div>
+
+  <div class="relative z-10 text-center px-4 max-w-2xl mx-auto">
+    <h1 class="font-display text-[150px] md:text-[200px] font-bold text-surface-light leading-none tracking-tighter opacity-80 mb-2">403</h1>
+    
+    <div class="space-y-6">
+      <h2 class="font-display text-3xl md:text-4xl font-bold text-text-light">Restricted Territory</h2>
+      
+      <p class="text-lg md:text-xl text-text-muted font-light max-w-lg mx-auto">
+        You don't have permission to access this area. Some journeys require special clearance.
+      </p>
+      
+      <div class="pt-8">
+        <a href="/" class="inline-flex items-center px-8 py-3.5 bg-surface border border-surface-light hover:border-primary hover:text-primary text-text-light font-bold rounded-lg transition-colors group">
+          <span class="material-symbols-outlined mr-2">home</span> BACK TO HOME
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

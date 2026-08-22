@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+
+{% block title %}Itinerary Builder - {{ trip.name }}{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .builder-h { height: calc(100vh - 80px); }
+    @media (max-width: 1024px) {
+        .builder-h { height: auto; min-height: 100vh; }
+    }
+    .leaflet-popup-content-wrapper {
+        background-color: var(--color-surface);
+        color: var(--color-on-surface);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+    }
+    .leaflet-popup-tip {
+        background-color: var(--color-surface);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .leaflet-container {
+        font-family: inherit;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row w-full builder-h overflow-hidden bg-background">
+    
+    <!-- LEFT: Journey Route (w-1/4) -->
+    <div class="w-full lg:w-1/4 bg-surface-container/80 backdrop-blur-md border-r border-outline-variant/10 flex flex-col h-full z-10 shadow-2xl relative">
+        <div class="p-6 border-b border-outline-variant/10 bg-surface-container/90 sticky top-0 z-20">
+            <a href="{{ url_for('trip_detail', trip_id=trip.id) }}" class="text-xs font-bold text-on-surface-variant hover:text-primary uppercase tracking-widest flex items-center mb-4 transition-colors">
+                <span class="material-symbols-outlined text-[16px] mr-2">arrow_back</span> Back to Trip
+            </a>
+            <div class="flex justify-between items-center">
+                <h2 class="font-display-md text-2xl text-on-background uppercase tracking-wider">Your Route</h2>
+                <button type="button" id="open-add-dest-modal-btn" class="text-primary hover:text-primary-container transition-colors bg-primary/10 p-2 rounded-full flex items-center justify-center cursor-pointer">
+                    <span class="material-symbols-outlined text-[20px] pointer-events-none">add</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar" id="stops-container">
+            {% for stop in trip.stops %}
+            <div class="mb-4 bg-surface border border-outline-variant/10 rounded-2xl p-5 cursor-pointer hover:border-primary/50 hover:bg-surface-variant transition-all group {{ 'border-primary bg-surface-variant shadow-[0_0_20px_rgba(234,88,12,0.15)]' if loop.first else '' }}" 
+                 onclick="selectStop({{ stop.id }}, '{{ stop.destination.city }}', {{ loop.index }}, {{ stop.destination.latitude|default('null', true) }}, {{ stop.destination.longitude|default('null', true) }})" data-stop-id="{{ stop.id }}">
+                <div class="flex justify-between items-start gap-4">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 shrink-0 rounded-full bg-background border border-outline-variant/20 text-secondary flex items-center justify-center font-bold text-sm font-ui-button mr-4">{{ loop.index }}</div>
+                        <div>
+                            <p class="text-[10px] text-primary uppercase font-bold tracking-widest mb-1">{{ stop.destination.country }}</p>
+                            <h3 class="font-display-sm text-lg text-on-background leading-tight">{{ stop.destination.city }}</h3>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant/30 text-xl cursor-grab active:cursor-grabbing group-hover:text-on-surface-variant transition-colors mt-1">drag_indicator</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center p-8 bg-surface-variant rounded-2xl border border-dashed border-outline-variant/20">
+                <span class="material-symbols-outlined text-4xl text-on-surface-variant/50 mb-3">explore_off</span>
+                <p class="text-sm text-on-surface-variant">No destinations yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- CENTER: Map Area (w-1/2) -->
+    <div class="w-full lg:w-1/2 h-[50vh] lg:h-full relative bg-surface">
+        <div id="map" class="w-full h-full z-0"></div>
+        
+        <!-- View Toggle Floating Nav -->
+        <div class="absolute top-6 left-1/2 transform -translate-x-1/2 z-[400] flex bg-surface-container/90 backdrop-blur-md rounded-full border border-outline-variant/20 p-1.5 shadow-2xl">
+            <a href="{{ url_for('trip_itinerary_builder', trip_id=trip.id) }}" class="px-6 py-2 text-xs font-bold uppercase tracking-[0.2em] rounded-full bg-primary text-on-primary shadow-[0_0_15px_rgba(234,88,12,0.3)]">Map</a>
+            <a href="{{ url_for('trip_itinerary_view', trip_id=trip.id) }}" class="px-6 py-2 text-xs font-bold uppercase tracking-[0.2em] rounded-full text-on-surface-variant hover:text-on-surface transition-colors">Timeline</a>
+            <a href="{{ url_for('trip_calendar', trip_id=trip.id) }}" class="px-6 py-2 text-xs font-bold uppercase tracking-[0.2em] rounded-full text-on-surface-variant hover:text-on-surface transition-colors">Calendar</a>
+        </div>
+    </div>
+
+    <!-- RIGHT: Day Schedule (w-1/4) -->
+    <div class="w-full lg:w-1/4 bg-surface-container/80 backdrop-blur-md border-l border-outline-variant/10 flex flex-col h-full z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.3)]">
+        <div class="p-6 border-b border-outline-variant/10 bg-surface-container/90 sticky top-0 z-20 flex justify-between items-center">
+            <h2 class="font-display-sm text-xl text-secondary tracking-wide uppercase" id="schedule-title">
+                {% if trip.stops %}DAY 01 — {{ trip.stops[0].destination.city|upper }}{% else %}SCHEDULE{% endif %}
+            </h2>
+            <button type="button" onclick="alert('Activity planning coming soon!')" class="text-primary hover:text-primary-container transition-colors bg-primary/10 p-2 rounded-full">
+                <span class="material-symbols-outlined text-[20px]">add</span>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar relative" id="schedule-container">
+            <!-- Timeline vertical line -->
+            <div class="absolute left-[45px] top-8 bottom-8 w-px bg-outline-variant/20"></div>
+            
+            <!-- Mock Activities (Visual Only) -->
+            <div class="relative pl-16 mb-10 group">
+                <!-- Time Dot -->
+                <div class="absolute left-[29px] top-1.5 w-3 h-3 bg-secondary rounded-full transform -translate-x-1/2 border-2 border-background z-10 shadow-[0_0_10px_rgba(199,194,234,0.5)]"></div>
+                <!-- Time Label -->
+                <div class="absolute left-0 top-0.5 text-xs font-bold text-on-surface-variant w-14 text-right">09:00</div>
+                
+                <div class="bg-surface border border-outline-variant/10 rounded-2xl p-4 shadow-lg group-hover:border-outline-variant/30 group-hover:-translate-y-1 transition-all">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-ui-button text-sm text-on-background leading-tight">Explore the Old City</h4>
+                    </div>
+                    <div class="flex items-center gap-2 mt-3">
+                        <span class="text-[9px] font-bold uppercase tracking-[0.2em] px-2 py-1 rounded-md bg-secondary/20 text-secondary">Activity</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative pl-16 mb-10 group">
+                <div class="absolute left-[29px] top-1.5 w-3 h-3 bg-tertiary rounded-full transform -translate-x-1/2 border-2 border-background z-10 shadow-[0_0_10px_rgba(167,203,115,0.5)]"></div>
+                <div class="absolute left-0 top-0.5 text-xs font-bold text-on-surface-variant w-14 text-right">13:30</div>
+                
+                <div class="bg-surface border border-outline-variant/10 rounded-2xl p-4 shadow-lg group-hover:border-outline-variant/30 group-hover:-translate-y-1 transition-all">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-ui-button text-sm text-on-background leading-tight">Local Cuisine Lunch</h4>
+                    </div>
+                    <div class="flex items-center gap-2 mt-3">
+                        <span class="text-[9px] font-bold uppercase tracking-[0.2em] px-2 py-1 rounded-md bg-tertiary/20 text-tertiary">Dining</span>
+                        <span class="text-xs text-on-surface-variant ml-auto font-medium">₹1,500</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" onclick="alert('Activity planning coming soon!')" class="w-full mt-4 py-4 bg-background border border-dashed border-outline-variant/30 rounded-2xl text-sm font-bold text-on-surface-variant hover:text-primary hover:border-primary/50 transition-colors flex items-center justify-center uppercase tracking-widest">
+                <span class="material-symbols-outlined mr-2 text-[18px]">add</span> Add Experience
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+    const tripId = {{ trip.id }};
+
+    // Initialize Map with Carto Dark Matter tiles for cinematic look
+    const map = L.map('map', {zoomControl: false}).setView([20, 0], 2);
+    L.control.zoom({position: 'bottomright'}).addTo(map);
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(map);
+
+    // Custom Marker Icon (Warm Orange dot)
+    const customIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="width:16px;height:16px;background-color:#EA580C;border-radius:50%;border:3px solid #0F172A;box-shadow:0 0 15px rgba(234,88,12,0.6);"></div>',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+
+    const routeCoords = [];
+    const markers = [];
+
+    // Parse stops and plot on map
+    {% for stop in trip.stops %}
+        {% if stop.destination.latitude and stop.destination.longitude %}
+            (function(){
+                const lat = {{ stop.destination.latitude }};
+                const lng = {{ stop.destination.longitude }};
+                const city = "{{ stop.destination.city|escape }}";
+                const index = {{ loop.index }};
+                
+                routeCoords.push([lat, lng]);
+                
+                const marker = L.marker([lat, lng], {icon: customIcon})
+                    .bindPopup(`<b style="font-family:serif;font-size:1.1rem;color:#E2E8F0;">Stop ${index}</b><br><span style="color:#EA580C;">${city}</span>`)
+                    .addTo(map);
+                
+                markers.push(marker);
+            })();
+        {% endif %}
+    {% endfor %}
+
+    // Draw route polyline
+    if (routeCoords.length > 1) {
+        L.polyline(routeCoords, {
+            color: '#EA580C',
+            weight: 3,
+            opacity: 0.6,
+            dashArray: '10, 10',
+            lineJoin: 'round'
+        }).addTo(map);
+    }
+
+    // Auto-fit bounds
+    if (routeCoords.length > 0) {
+        map.fitBounds(L.latLngBounds(routeCoords), {padding: [50, 50], maxZoom: 8});
+    }
+
+    // Sortable functionality for route ordering
+    const stopsContainer = document.getElementById('stops-container');
+    if(stopsContainer) {
+        new Sortable(stopsContainer, {
+            animation: 300,
+            handle: '.cursor-grab',
+            ghostClass: 'opacity-30',
+            onEnd: async function(evt) {
+                // Collect new order
+                const items = stopsContainer.querySelectorAll('[data-stop-id]');
+                const stopIds = Array.from(items).map(item => parseInt(item.getAttribute('data-stop-id')));
+                
+                try {
+                    const res = await fetch(`/api/trips/${tripId}/stops/reorder`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ stop_ids: stopIds })
+                    });
+                    const data = await res.json();
+                    if(data.success) {
+                        window.location.reload(); // Reload to refresh map drawing
+                    } else {
+                        alert('Reorder failed: ' + data.error.message);
+                    }
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+        });
+    }
+
+    // UI interactions
+    function selectStop(stopId, cityName, index, lat, lng) {
+        document.getElementById('schedule-title').textContent = `DAY ${String(index).padStart(2, '0')} — ${cityName.toUpperCase()}`;
+        
+        // Highlight active stop in list
+        const items = document.querySelectorAll('#stops-container > div');
+        items.forEach(el => {
+            el.classList.remove('border-primary', 'bg-surface-variant', 'shadow-[0_0_20px_rgba(234,88,12,0.15)]');
+        });
+        event.currentTarget.classList.add('border-primary', 'bg-surface-variant', 'shadow-[0_0_20px_rgba(234,88,12,0.15)]');
+        
+        // Pan map to location
+        if (lat !== null && lng !== null) {
+            map.flyTo([lat, lng], 10, {
+                animate: true,
+                duration: 1.5
+            });
+        }
+    }
+</script>
+
+<!-- Add Destination Modal -->
+<div id="add-dest-modal" class="fixed inset-0 hidden" style="z-index: 9999;">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-background/80 backdrop-blur-sm" style="z-index: 10000;" onclick="document.getElementById('add-dest-modal').classList.add('hidden')"></div>
+    <!-- Modal Content -->
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-surface-container rounded-3xl shadow-2xl border border-outline-variant/20 p-8" style="z-index: 10001;">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-display-sm text-2xl text-on-background">Add Destination</h3>
+            <button onclick="document.getElementById('add-dest-modal').classList.add('hidden')" class="text-on-surface-variant hover:text-on-surface transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <form id="add-dest-form" class="space-y-6">
+            <div class="relative custom-dropdown z-50">
+                <label class="block text-sm font-medium text-on-surface/80 uppercase tracking-wider mb-2">City</label>
+                <select id="destination_id" name="destination_id" required
+                        class="w-full bg-background border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors cursor-pointer appearance-none">
+                    <option value="" disabled selected>Select a destination...</option>
+                    {% for dest in destinations %}
+                    <option value="{{ dest.id }}">{{ dest.city }}, {{ dest.country }}</option>
+                    {% endfor %}
+                </select>
+                <!-- Custom Arrow -->
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 top-7">
+                    <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+                </div>
+            </div>
+            
+            <div id="add-dest-error" class="hidden text-error text-sm font-bold bg-error-container text-on-error-container p-3 rounded-xl"></div>
+            
+            <button type="submit" id="add-dest-btn" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-full shadow-sm text-sm font-bold text-on-primary bg-primary hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors uppercase tracking-widest shadow-[0_0_15px_rgba(234,88,12,0.3)]">
+                Add to Route
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Open Modal
+document.getElementById('open-add-dest-modal-btn').addEventListener('click', () => {
+    document.getElementById('add-dest-modal').classList.remove('hidden');
+});
+
+document.getElementById('add-dest-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('add-dest-btn');
+    const errorDiv = document.getElementById('add-dest-error');
+    const destId = document.getElementById('destination_id').value;
+    
+    if (!destId) {
+        errorDiv.textContent = 'Please select a destination.';
+        errorDiv.classList.remove('hidden');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin mr-2">progress_activity</span> Adding...';
+    errorDiv.classList.add('hidden');
+    
+    try {
+        const response = await fetch('/api/trips/{{ trip.id }}/stops', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                destination_id: parseInt(destId)
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            window.location.reload();
+        } else {
+            errorDiv.textContent = result.error.message || 'Failed to add destination.';
+            errorDiv.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = 'ADD TO ROUTE';
+        }
+    } catch (err) {
+        errorDiv.textContent = 'An unexpected error occurred.';
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'ADD TO ROUTE';
+    }
+});
+</script>
+{% endblock %}

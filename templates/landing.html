@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+  /* Base Parallax Container */
+  .parallax-wrapper {
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    perspective: 1px;
+    background-color: #0b0f19;
+  }
+
+  /* Hide scrollbar for a cleaner look */
+  .parallax-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .parallax-group {
+    position: relative;
+    height: 100vh;
+    transform-style: preserve-3d;
+  }
+
+  /* Parallax Layers */
+  .parallax-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .layer-sky {
+    transform: translateZ(-3px) scale(4);
+    background-image: linear-gradient(to bottom, #070b14, #1a163a, #4a1e38);
+    z-index: 1;
+  }
+
+  .layer-mountains-back {
+    transform: translateZ(-2px) scale(3);
+    background-image: url('https://images.unsplash.com/photo-1542224566-6e85f2e6772f?q=80&w=2560&auto=format&fit=crop'); /* Dark mountain range placeholder */
+    background-position: bottom;
+    opacity: 0.6;
+    z-index: 2;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+  }
+
+  .layer-mountains-front {
+    transform: translateZ(-1px) scale(2);
+    background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2560&auto=format&fit=crop'); /* Foreground mountains */
+    background-position: bottom;
+    opacity: 0.8;
+    z-index: 3;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%);
+  }
+
+  .layer-foreground {
+    transform: translateZ(0);
+    z-index: 4;
+    background: linear-gradient(to top, #0b0f19 0%, #0b0f19 20%, transparent 80%);
+  }
+  
+  .hero-content {
+    transform: translateZ(0);
+    z-index: 5;
+    text-align: center;
+    margin-top: -10vh;
+  }
+
+  /* Storytelling Sections */
+  .story-section {
+    position: relative;
+    z-index: 10;
+    background-color: #0b0f19;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 6rem 0;
+  }
+  
+  /* Scroll Animations */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-delay-1 { transition-delay: 100ms; }
+  .reveal-delay-2 { transition-delay: 200ms; }
+  .reveal-delay-3 { transition-delay: 300ms; }
+
+  /* Smooth noise overlay */
+  .noise {
+    position: fixed;
+    inset: 0;
+    background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 50;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="noise"></div>
+
+<!-- PARALLAX SCROLL CONTAINER -->
+<div class="parallax-wrapper" id="parallaxScroll">
+  
+  <!-- HERO PARALLAX -->
+  <div class="parallax-group">
+    <div class="parallax-layer layer-sky"></div>
+    <div class="parallax-layer layer-mountains-back"></div>
+    <div class="parallax-layer layer-mountains-front"></div>
+    <div class="parallax-layer layer-foreground"></div>
+    
+    <div class="parallax-layer hero-content flex-col px-6">
+      <span class="text-primary text-sm font-bold tracking-[0.3em] uppercase mb-6 reveal active">Begin Your Journey</span>
+      <h1 class="font-display-xl text-6xl md:text-8xl lg:text-[120px] text-on-background font-bold leading-[1.1] mb-8 drop-shadow-2xl whitespace-pre-line reveal active reveal-delay-1">TRAVEL
+WITHOUT
+LIMITS</h1>
+      <p class="text-lg md:text-xl text-on-surface-variant mb-12 max-w-2xl mx-auto font-body-lg leading-relaxed reveal active reveal-delay-2">
+        Create personalized multi-city journeys, discover unforgettable experiences, and keep every adventure within budget.
+      </p>
+      
+      <div class="flex flex-col sm:flex-row gap-6 justify-center reveal active reveal-delay-3">
+        <a href="{{ url_for('signup_page') }}" class="bg-primary text-on-primary hover:bg-primary-container transition-all font-ui-button px-10 py-4 rounded-full flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(234,88,12,0.3)] hover:shadow-[0_0_40px_rgba(234,88,12,0.5)] transform hover:-translate-y-1">
+          START THE JOURNEY <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+        </a>
+        <a href="#discover" class="border border-outline-variant text-on-background hover:bg-surface-variant transition-colors font-ui-button px-10 py-4 rounded-full text-center">
+          EXPLORE DESTINATIONS
+        </a>
+      </div>
+    </div>
+    
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 opacity-60 z-20">
+      <span class="text-on-background text-[10px] tracking-[0.3em]">SCROLL</span>
+      <div class="w-[1px] h-16 bg-gradient-to-b from-on-background to-transparent"></div>
+    </div>
+  </div>
+
+  <!-- STORY SECTION 1: DISCOVER -->
+  <section id="discover" class="story-section border-t border-outline-variant/10">
+    <div class="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div class="order-2 md:order-1 relative h-[600px] w-full rounded-2xl overflow-hidden reveal">
+        <div class="absolute inset-0 bg-surface-container-high/20 mix-blend-overlay z-10"></div>
+        <img src="https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=1200&auto=format&fit=crop" class="w-full h-full object-cover" alt="Paris">
+      </div>
+      <div class="order-1 md:order-2 space-y-8 reveal">
+        <span class="text-primary text-sm font-bold tracking-[0.2em] uppercase">01 / Discover</span>
+        <h2 class="font-display-lg text-5xl md:text-7xl text-on-background leading-tight">Find Your Next<br><span class="text-on-surface-variant italic">Destination</span></h2>
+        <p class="text-on-surface-variant text-lg leading-relaxed max-w-lg">
+          Browse through our curated collection of global cities. From the bustling streets of Tokyo to the historic ruins of Rome, your next story begins here.
+        </p>
+        <a href="{{ url_for('explore_destinations') }}" class="inline-flex items-center gap-2 text-primary hover:text-primary-container font-ui-button transition-colors">
+          DISCOVER CITIES <span class="material-symbols-outlined text-[18px]">east</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORY SECTION 2: PLAN -->
+  <section class="story-section bg-surface/30">
+    <div class="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div class="space-y-8 reveal">
+        <span class="text-secondary text-sm font-bold tracking-[0.2em] uppercase">02 / Plan</span>
+        <h2 class="font-display-lg text-5xl md:text-7xl text-on-background leading-tight">Build The Perfect<br><span class="text-on-surface-variant italic">Itinerary</span></h2>
+        <p class="text-on-surface-variant text-lg leading-relaxed max-w-lg">
+          Connect multiple cities seamlessly. Our interactive planner synchronizes your route with an interactive map, allowing you to drag, drop, and design your days flawlessly.
+        </p>
+      </div>
+      <div class="relative h-[600px] w-full rounded-2xl overflow-hidden reveal border border-outline-variant/20 shadow-2xl">
+        <div class="absolute inset-0 bg-surface/50 backdrop-blur-sm z-10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-6xl text-secondary opacity-50">map</span>
+        </div>
+        <!-- Mock Map UI -->
+        <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1200&auto=format&fit=crop" class="w-full h-full object-cover opacity-60" alt="Map">
+      </div>
+    </div>
+  </section>
+
+  <!-- STORY SECTION 3: TRACK -->
+  <section class="story-section">
+    <div class="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div class="order-2 md:order-1 relative h-[600px] w-full rounded-2xl overflow-hidden reveal bg-surface-container border border-outline-variant/30 flex flex-col justify-center p-12">
+        <div class="space-y-6">
+            <div class="h-4 bg-outline-variant/20 rounded w-1/3"></div>
+            <div class="h-12 bg-primary/20 rounded w-2/3 border border-primary/30"></div>
+            <div class="h-12 bg-outline-variant/10 rounded w-full"></div>
+            <div class="h-12 bg-outline-variant/10 rounded w-5/6"></div>
+        </div>
+      </div>
+      <div class="order-1 md:order-2 space-y-8 reveal">
+        <span class="text-tertiary text-sm font-bold tracking-[0.2em] uppercase">03 / Track</span>
+        <h2 class="font-display-lg text-5xl md:text-7xl text-on-background leading-tight">Keep the Adventure<br><span class="text-on-surface-variant italic">In Budget</span></h2>
+        <p class="text-on-surface-variant text-lg leading-relaxed max-w-lg">
+          Every activity you add dynamically updates your trip's financial health. Monitor categories, track daily spending, and travel with peace of mind.
+        </p>
+      </div>
+    </div>
+  </section>
+  
+  <!-- STORY SECTION 4: SHARE -->
+  <section class="story-section bg-surface/30">
+    <div class="max-w-4xl mx-auto px-6 w-full text-center space-y-10 reveal">
+      <span class="text-primary text-sm font-bold tracking-[0.2em] uppercase">04 / Share</span>
+      <h2 class="font-display-lg text-6xl md:text-8xl text-on-background leading-tight">Inspire Others</h2>
+      <p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto">
+        Turn your itinerary into a beautiful, read-only travel story. Generate a secure link and share your meticulously planned journey with friends, family, or the world.
+      </p>
+      <div class="pt-8">
+        <a href="{{ url_for('signup_page') }}" class="bg-on-background text-background hover:bg-on-surface-variant transition-colors font-ui-button px-12 py-5 rounded-full inline-flex shadow-xl">
+          PLAN YOUR NEXT ADVENTURE
+        </a>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Reveal Animations
+    const reveals = document.querySelectorAll('.reveal');
+    const scrollContainer = document.getElementById('parallaxScroll');
+    
+    // We observe elements inside the parallax scrolling container
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, {
+        root: scrollContainer,
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px"
+    });
+
+    reveals.forEach(el => observer.observe(el));
+    
+    // Hide default global navbar on the landing page if desired,
+    // or let it merge. The scrollContainer takes over window scrolling,
+    // so we need to bridge the scroll event to the global navbar if it exists.
+    const nav = document.getElementById('globalNavbar');
+    if (nav && scrollContainer) {
+        scrollContainer.addEventListener('scroll', () => {
+            if (scrollContainer.scrollTop > 50) {
+                nav.classList.remove('bg-transparent', 'border-transparent');
+                nav.classList.add('bg-background/90', 'backdrop-blur-xl', 'border-outline-variant/30', 'shadow-lg');
+            } else {
+                nav.classList.add('bg-transparent', 'border-transparent');
+                nav.classList.remove('bg-background/90', 'backdrop-blur-xl', 'border-outline-variant/30', 'shadow-lg');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

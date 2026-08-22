@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Control Center - GlobeTrotter{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-tint": "#d95d39",
+            "tertiary-fixed-dim": "#b78a1c",
+            "surface-container-high": "#ebe8df",
+            "outline-variant": "#d0ccc3",
+            "on-background": "#2a2825",
+            "on-primary-container": "#ffe8e3",
+            "tertiary-container": "#ffe8b3",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "primary-fixed": "#ffdad2",
+            "outline": "#857e7a",
+            "tertiary-fixed": "#ffdf99",
+            "on-error": "#ffffff",
+            "secondary-fixed": "#e4dfff",
+            "error": "#ba1a1a",
+            "surface-dim": "#d9d6ce",
+            "background": "#fdfcf8",
+            "surface-variant": "#e0ddd4",
+            "on-surface-variant": "#5a5752",
+            "on-surface": "#2a2825",
+            "surface-container-lowest": "#ffffff",
+            "primary": "#d95d39",
+            "surface": "#fdfcf8",
+            "tertiary": "#b78a1c",
+            "secondary": "#6b639e",
+            "on-secondary": "#ffffff",
+            "on-secondary-container": "#1e164e",
+            "surface-container-low": "#f8f6f0",
+            "surface-container": "#f5f4ef",
+            "inverse-surface": "#32302c",
+            "secondary-container": "#e6e1ff",
+            "surface-bright": "#fdfcf8",
+            "primary-container": "#ffdbd3",
+            "surface-container-highest": "#e0ddd4",
+            "success": "#16a34a",
+            "warning": "#d97706",
+            "info": "#2563eb"
+          },
+          fontFamily: {
+            "ui-button": ["Plus Jakarta Sans"],
+            "display-xl": ["Libre Caslon Text"],
+            "headline-md": ["Libre Caslon Text"],
+            "headline-lg": ["Libre Caslon Text"],
+            "display-lg": ["Libre Caslon Text"],
+            "label-caps": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"]
+          }
+        }
+      }
+    }
+    </script>
+    <style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-surface-container-lowest text-on-surface min-h-screen font-body-md flex overflow-hidden">
+    
+    <!-- Admin Sidebar -->
+    <aside class="w-64 bg-surface-container-low border-r border-outline-variant flex flex-col h-screen flex-shrink-0">
+        <div class="h-20 flex items-center px-6 border-b border-outline-variant">
+            <a href="/admin" class="font-headline-md text-primary truncate">
+                GlobeTrotter
+            </a>
+        </div>
+        
+        <div class="px-6 py-4">
+            <span class="text-[10px] font-label-caps text-on-surface-variant tracking-widest uppercase">Admin Control Center</span>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto px-4 pb-4 space-y-1">
+            <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.url.path == '/admin' %}bg-primary-container text-primary font-medium{% else %}text-on-surface hover:bg-surface-variant{% endif %} transition-colors">
+                <span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+            <a href="/admin/users" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.url.path.startswith('/admin/users') %}bg-primary-container text-primary font-medium{% else %}text-on-surface hover:bg-surface-variant{% endif %} transition-colors">
+                <span class="material-symbols-outlined text-[20px]">group</span>
+                Users
+            </a>
+            <a href="/admin/trips" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.url.path.startswith('/admin/trips') %}bg-primary-container text-primary font-medium{% else %}text-on-surface hover:bg-surface-variant{% endif %} transition-colors">
+                <span class="material-symbols-outlined text-[20px]">flight_takeoff</span>
+                Trips
+            </a>
+            <a href="/admin/destinations" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.url.path.startswith('/admin/destinations') %}bg-primary-container text-primary font-medium{% else %}text-on-surface hover:bg-surface-variant{% endif %} transition-colors">
+                <span class="material-symbols-outlined text-[20px]">map</span>
+                Destinations
+            </a>
+            <a href="/admin/activities" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.url.path.startswith('/admin/activities') %}bg-primary-container text-primary font-medium{% else %}text-on-surface hover:bg-surface-variant{% endif %} transition-colors">
+                <span class="material-symbols-outlined text-[20px]">attractions</span>
+                Activities
+            </a>
+            <a href="/admin/analytics" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.url.path.startswith('/admin/analytics') %}bg-primary-container text-primary font-medium{% else %}text-on-surface hover:bg-surface-variant{% endif %} transition-colors">
+                <span class="material-symbols-outlined text-[20px]">insights</span>
+                Analytics
+            </a>
+            <a href="/admin/settings" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.url.path.startswith('/admin/settings') %}bg-primary-container text-primary font-medium{% else %}text-on-surface hover:bg-surface-variant{% endif %} transition-colors">
+                <span class="material-symbols-outlined text-[20px]">settings</span>
+                Settings
+            </a>
+            
+            <div class="my-4 border-t border-outline-variant"></div>
+            
+            <a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary hover:bg-secondary-container transition-colors">
+                <span class="material-symbols-outlined text-[20px]">open_in_new</span>
+                View Traveler App
+            </a>
+            <a href="/logout" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-error hover:bg-error-container transition-colors">
+                <span class="material-symbols-outlined text-[20px]">logout</span>
+                Logout
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-outline-variant bg-surface-container text-xs text-on-surface-variant flex items-center justify-between">
+            <span>Admin Mode</span>
+            <span class="w-2 h-2 rounded-full bg-success"></span>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-surface-container-lowest">
+        
+        <!-- Header -->
+        <header class="h-20 bg-surface-container-lowest border-b border-outline-variant flex items-center justify-between px-8 shrink-0">
+            <div>
+                <h1 class="text-2xl font-headline-md text-on-surface">{% block header_title %}Admin Control Center{% endblock %}</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-medium text-on-surface">Hello, {{ user.name }}</span>
+                <div class="w-10 h-10 rounded-full border border-primary flex items-center justify-center overflow-hidden bg-primary-container text-primary font-bold">
+                    {{ user.name[0]|upper }}
+                </div>
+            </div>
+        </header>
+
+        <!-- Content scrollable area -->
+        <div class="flex-1 overflow-y-auto p-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    <!-- Admin toast component -->
+    <div id="admin-toast" class="fixed bottom-6 right-6 max-w-sm w-full bg-inverse-surface text-surface-container-lowest rounded-lg shadow-xl p-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-start gap-3">
+        <span id="admin-toast-icon" class="material-symbols-outlined mt-0.5">info</span>
+        <div class="flex-1">
+            <h4 id="admin-toast-title" class="font-medium text-sm">Notification</h4>
+            <p id="admin-toast-message" class="text-xs mt-1 text-surface-container-high opacity-90"></p>
+        </div>
+        <button onclick="hideAdminToast()" class="text-surface-container-lowest opacity-70 hover:opacity-100">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+    </div>
+    
+    <script>
+        function showAdminToast(title, message, type = 'info') {
+            const toast = document.getElementById('admin-toast');
+            const toastIcon = document.getElementById('admin-toast-icon');
+            
+            document.getElementById('admin-toast-title').innerText = title;
+            document.getElementById('admin-toast-message').innerText = message;
+            
+            if (type === 'success') {
+                toastIcon.innerText = 'check_circle';
+                toastIcon.className = 'material-symbols-outlined mt-0.5 text-success';
+            } else if (type === 'error') {
+                toastIcon.innerText = 'error';
+                toastIcon.className = 'material-symbols-outlined mt-0.5 text-error';
+            } else {
+                toastIcon.innerText = 'info';
+                toastIcon.className = 'material-symbols-outlined mt-0.5 text-info';
+            }
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                hideAdminToast();
+            }, 5000);
+        }
+        
+        function hideAdminToast() {
+            const toast = document.getElementById('admin-toast');
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }
+        
+        // Simple function to format numbers for KPI cards
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US').format(num);
+        }
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

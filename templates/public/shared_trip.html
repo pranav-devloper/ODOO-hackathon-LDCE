@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ trip.name }} - GlobeTrotter{% endblock %}
+
+{% block head %}
+<!-- Include Leaflet CSS/JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative py-20 lg:py-32 overflow-hidden bg-bg">
+  <div class="absolute inset-0 bg-gradient-to-r from-primary/10 via-surface to-secondary/10 opacity-50 z-0"></div>
+  
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+    <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-surface-light border border-surface-light text-sm text-text-muted mb-6">
+      <span class="material-symbols-outlined text-[16px] mr-2">public</span> Public Trip
+    </div>
+    
+    <h1 class="font-display text-5xl md:text-7xl font-bold text-text-light mb-6">{{ trip.name }}</h1>
+    
+    <div class="flex flex-wrap justify-center items-center gap-6 text-text-muted text-lg mb-8">
+      <span class="flex items-center"><span class="material-symbols-outlined mr-2">calendar_month</span> {{ trip.start_date }} - {{ trip.end_date }}</span>
+      <span class="hidden sm:inline">•</span>
+      <span class="flex items-center"><span class="material-symbols-outlined mr-2">schedule</span> {{ trip.days_count }} Days</span>
+      <span class="hidden sm:inline">•</span>
+      <span class="flex items-center"><span class="material-symbols-outlined mr-2">person</span> Shared by {{ trip.user_name | default('a traveler') }}</span>
+    </div>
+    
+    <div class="flex justify-center gap-4">
+      <button id="copyTripBtn" class="bg-primary hover:bg-primary/90 text-bg px-8 py-3 rounded-lg font-bold tracking-wide transition-colors flex items-center shadow-lg shadow-primary/20">
+        <span class="material-symbols-outlined mr-2">content_copy</span> COPY THIS TRIP
+      </button>
+      <button id="shareBtn" class="bg-surface hover:bg-surface-light border border-surface-light text-text-light px-6 py-3 rounded-lg font-medium transition-colors flex items-center">
+        <span class="material-symbols-outlined mr-2">share</span> SHARE
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+    <!-- Left Column: Itinerary -->
+    <div class="lg:col-span-2">
+      <h2 class="font-display text-3xl font-bold text-text-light mb-8 flex items-center">
+        <span class="material-symbols-outlined text-primary mr-3 text-3xl">route</span> The Journey
+      </h2>
+      
+      <!-- Route Vis (Simple) -->
+      <div class="mb-12 flex items-center space-x-4 overflow-x-auto pb-4 hide-scrollbar">
+        {% for city in trip.cities %}
+        <div class="flex-shrink-0 bg-surface border border-surface-light px-4 py-2 rounded-full font-medium text-text-light">
+          {{ city }}
+        </div>
+        {% if not loop.last %}
+        <span class="material-symbols-outlined text-text-muted flex-shrink-0">arrow_forward</span>
+        {% endif %}
+        {% endfor %}
+      </div>
+      
+      <!-- Timeline -->
+      <div class="space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-surface-light before:to-transparent">
+        {% for day, activities in itinerary.items() %}
+        <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+          <!-- Marker -->
+          <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-bg bg-surface-light text-primary font-bold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+            {{ loop.index }}
+          </div>
+          
+          <!-- Content -->
+          <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-surface border border-surface-light p-6 rounded-xl shadow-sm">
+            <h3 class="font-display text-xl font-bold text-text-light mb-4">{{ day }}</h3>
+            <ul class="space-y-4">
+              {% for item in activities %}
+              <li class="flex items-start">
+                <span class="material-symbols-outlined text-text-muted mt-0.5 mr-3 text-[20px]">
+                  {% if item.type == 'travel' %}flight
+                  {% elif item.type == 'hotel' %}hotel
+                  {% else %}attractions{% endif %}
+                </span>
+                <div>
+                  <p class="font-medium text-text-light">{{ item.name }}</p>
+                  {% if item.time %}<p class="text-sm text-text-muted">{{ item.time }}</p>{% endif %}
+                </div>
+              </li>
+              {% else %}
+              <p class="text-sm text-text-muted italic">Free time to explore.</p>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <!-- Right Column: Map & Budget -->
+    <div class="space-y-8">
+      <!-- Map -->
+      <div class="bg-surface border border-surface-light rounded-xl overflow-hidden shadow-sm h-80 relative z-0" id="tripMap">
+        <!-- Leaflet map inserted here -->
+      </div>
+      
+      <!-- Budget Summary -->
+      <div class="bg-surface border border-surface-light rounded-xl p-6 shadow-sm">
+        <h3 class="font-display text-xl font-bold text-text-light mb-6 flex items-center">
+          <span class="material-symbols-outlined text-tertiary mr-2">account_balance_wallet</span> Estimated Cost
+        </h3>
+        
+        <div class="space-y-4 mb-6">
+          {% for category, amount in budget_summary.items() %}
+          {% if category != 'total' %}
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-text-muted capitalize">{{ category }}</span>
+              <span class="text-text-light font-medium">${{ amount }}</span>
+            </div>
+            <div class="w-full bg-surface-light rounded-full h-1.5">
+              <div class="bg-secondary h-1.5 rounded-full" style="width: {{ (amount / budget_summary.total * 100) }}%"></div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+        
+        <div class="pt-4 border-t border-surface-light flex justify-between items-end">
+          <span class="text-text-muted">Total</span>
+          <span class="font-display text-3xl font-bold text-text-light">${{ budget_summary.total }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Map Init
+    const map = L.map('tripMap').setView([20, 0], 2);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 20
+    }).addTo(map);
+    // Real implementation would add markers and polylines based on trip coordinates
+
+    // Actions
+    document.getElementById('shareBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
+    });
+
+    document.getElementById('copyTripBtn').addEventListener('click', () => {
+      {% if user %}
+      // Call API
+      fetch(`/api/share/{{ trip.share_token }}/copy`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if(data.success) {
+            window.location.href = `/trips/${data.data.trip_id}`;
+          } else {
+            alert('Error copying trip.');
+          }
+        });
+      {% else %}
+      window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+      {% endif %}
+    });
+  });
+</script>
+{% endblock %}

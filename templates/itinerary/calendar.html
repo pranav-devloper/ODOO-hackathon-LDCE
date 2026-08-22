@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendar - {{ trip.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6 border-b border-black/5 pb-6">
+        <div>
+            <a href="{{ url_for('trip_detail', trip_id=trip.id) }}" class="text-xs text-on-surface/50 hover:text-primary uppercase tracking-widest flex items-center mb-4 transition-colors">
+                <span class="material-symbols-outlined text-[16px] mr-1">arrow_back</span> Back to Trip
+            </a>
+            <h1 class="text-3xl md:text-5xl font-serif text-primary tracking-wide">{{ trip.name }}</h1>
+        </div>
+        
+        <!-- View Toggles -->
+        <div class="flex bg-surface-container rounded-lg border border-black/10 p-1 shadow-sm">
+            <a href="{{ url_for('trip_itinerary_builder', trip_id=trip.id) }}" class="px-4 py-2 text-xs font-medium uppercase tracking-wider rounded-md text-on-surface/60 hover:text-on-surface transition-colors flex items-center">
+                <span class="material-symbols-outlined text-[18px] mr-1">map</span> Map
+            </a>
+            <a href="{{ url_for('trip_itinerary_view', trip_id=trip.id) }}" class="px-4 py-2 text-xs font-medium uppercase tracking-wider rounded-md text-on-surface/60 hover:text-on-surface transition-colors flex items-center">
+                <span class="material-symbols-outlined text-[18px] mr-1">view_timeline</span> Timeline
+            </a>
+            <a href="{{ url_for('trip_calendar', trip_id=trip.id) }}" class="px-4 py-2 text-xs font-medium uppercase tracking-wider rounded-md bg-black/5 text-on-surface flex items-center shadow-inner">
+                <span class="material-symbols-outlined text-[18px] mr-1">calendar_month</span> Calendar
+            </a>
+        </div>
+    </div>
+
+    <!-- Calendar Controls -->
+    <div class="flex justify-between items-center mb-6 bg-surface-container p-4 rounded-2xl border border-black/5">
+        <button class="p-2 hover:bg-black/5 rounded-full transition-colors flex items-center justify-center text-on-surface/70">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <h2 class="text-xl font-medium tracking-wide uppercase text-on-surface">August 2026</h2>
+        <button class="p-2 hover:bg-black/5 rounded-full transition-colors flex items-center justify-center text-on-surface/70">
+            <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="bg-surface-container border border-black/5 rounded-2xl overflow-hidden shadow-xl">
+        <!-- Day headers -->
+        <div class="grid grid-cols-7 border-b border-black/5 bg-background/50">
+            {% for day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] %}
+            <div class="py-3 text-center text-xs font-medium uppercase tracking-widest text-on-surface/50">{{ day }}</div>
+            {% endfor %}
+        </div>
+        
+        <!-- Days -->
+        <div class="grid grid-cols-7 auto-rows-fr">
+            <!-- Mock calendar days for visual representation -->
+            <!-- In reality, this would be generated via backend logic or JS -->
+            {% for i in range(35) %}
+                <div class="min-h-[120px] border-b border-r border-black/5 p-2 bg-background relative hover:bg-surface-container/50 transition-colors cursor-pointer group">
+                    <span class="text-sm font-medium {% if i == 15 %}text-primary bg-primary/10 w-7 h-7 rounded-full flex items-center justify-center{% else %}text-on-surface/70{% endif %} mb-1 inline-block">
+                        {{ (i % 31) + 1 }}
+                    </span>
+                    
+                    <!-- Event Indicators -->
+                    {% if i == 15 or i == 16 or i == 17 %}
+                    <div class="mt-1 space-y-1">
+                        <div class="text-[10px] bg-primary/20 text-primary px-1.5 py-1 rounded truncate border border-primary/10">
+                            Paris - Day 1
+                        </div>
+                        {% if i == 15 %}
+                        <div class="text-[10px] bg-secondary/20 text-secondary px-1.5 py-1 rounded truncate border border-secondary/10 flex items-center">
+                            <span class="w-1.5 h-1.5 rounded-full bg-secondary mr-1"></span> Flight
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
