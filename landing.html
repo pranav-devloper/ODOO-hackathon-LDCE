@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+  /* Cinematic Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+
+  /* Hero Background */
+  .hero-bg {
+    background-color: #141310;
+    background-image: linear-gradient(135deg, rgba(45, 27, 61, 0.9) 0%, rgba(74, 25, 66, 0.8) 40%, rgba(228, 119, 92, 0.6) 80%, rgba(20, 19, 16, 0.95) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuDJal35eV9dl3JgdSRIPMEGkMKE98skBGrS5j8Ob7cZMq6WhE3x5ZX3wXW4WRoSnz7B9Qoyfmr1cgdc4Bw8c-uS_5zT3ws6UymTUgtTdGO3STnEi-YgIn9tOlcgXHngDIQFAiXzCf45y90fdOdHNXI9GwZcNPFBgwUAQ50xYHCCtH4kt6QoSjTDDKVd1HhnlIhikqDc6xYUB3JJy1fb5Yg9eMlVanDYKmFvdjhs7TD3_8Q5vdrEPzKsDA');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Animated Birds */
+  @keyframes fly {
+    0% { transform: translate(-100px, 100px) scale(0.5); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    100% { transform: translate(100vw, -200px) scale(1.5); opacity: 0; }
+  }
+
+  .bird-container {
+    position: absolute;
+    top: 20%;
+    left: -10%;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  .bird {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.6);
+    animation: fly 15s linear infinite;
+  }
+  
+  .bird:nth-child(2) { animation-delay: 4s; top: 10%; animation-duration: 18s; }
+  .bird:nth-child(3) { animation-delay: 8s; top: 30%; animation-duration: 20s; }
+
+  /* Particles Overlay */
+  .particles {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle at center, transparent 0%, #141310 120%);
+    pointer-events: none;
+    z-index: 5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="hero-bg min-h-screen flex items-center relative z-0">
+  <!-- Particles and Effects -->
+  <div class="particles"></div>
+  <div class="bird-container">
+    <span class="material-symbols-outlined bird">flight</span>
+    <span class="material-symbols-outlined bird">flight</span>
+    <span class="material-symbols-outlined bird">flight</span>
+  </div>
+
+  <div class="container mx-auto px-6 md:px-12 relative z-20">
+    <div class="max-w-3xl">
+      <div class="fade-in-up flex items-center gap-4 mb-6">
+        <span class="text-primary text-sm font-bold tracking-widest uppercase">01 / Begin Your Journey</span>
+      </div>
+      
+      <h1 class="fade-in-up delay-100 font-display text-5xl md:text-7xl lg:text-8xl text-on-primary font-bold leading-[1.1] mb-8 drop-shadow-2xl whitespace-pre-line text-white">TRAVEL
+WITHOUT
+LIMITS</h1>
+      
+      <p class="fade-in-up delay-200 text-lg md:text-xl text-white/90 mb-10 max-w-xl font-ui leading-relaxed">
+        Create personalized multi-city journeys, discover unforgettable experiences and keep every adventure within budget.
+      </p>
+      
+      <div class="fade-in-up delay-300 flex flex-col sm:flex-row gap-4">
+        <a href="/dashboard" class="bg-primary text-on-primary hover:bg-[#e6a292] transition-colors font-bold rounded-full px-8 py-4 text-center flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,180,162,0.3)]">
+          START THE JOURNEY <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </a>
+        <a href="#destinations" class="border border-white/30 text-white hover:bg-white/10 transition-colors font-bold rounded-full px-8 py-4 text-center">
+          EXPLORE DESTINATIONS
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll Indicator -->
+  <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-70 animate-pulse z-20">
+    <span class="text-white text-xs tracking-widest">SCROLL</span>
+    <div class="w-px h-12 bg-white/50"></div>
+  </div>
+</section>
+
+<!-- DESTINATIONS PREVIEW -->
+<section id="destinations" class="py-24 bg-surface-lowest">
+  <div class="container mx-auto px-6 md:px-12">
+    <div class="text-center mb-16">
+      <h2 class="font-display text-4xl text-on-surface mb-4">DISCOVER YOUR NEXT ADVENTURE</h2>
+      <p class="text-muted max-w-2xl mx-auto">Explore curated destinations handpicked for your next unforgettable journey.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {% for dest in destinations %}
+      <div class="group relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent z-10"></div>
+        <img src="{{ dest.image_url|default('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&q=80') }}" alt="{{ dest.name }}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+        <div class="absolute bottom-0 left-0 p-6 z-20 w-full">
+          <p class="text-primary text-sm font-bold tracking-wider mb-1">{{ dest.country }}</p>
+          <h3 class="text-2xl font-display text-white mb-4">{{ dest.name }}</h3>
+          <button class="w-full py-3 rounded-full border border-white/30 text-white text-sm font-semibold hover:bg-white hover:text-black transition-colors backdrop-blur-sm">
+            EXPLORE
+          </button>
+        </div>
+      </div>
+      {% else %}
+      <!-- Fallback empty state or default cards -->
+      <div class="group relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent z-10"></div>
+        <div class="absolute inset-0 bg-surface-high w-full h-full"></div>
+        <div class="absolute bottom-0 left-0 p-6 z-20 w-full">
+          <p class="text-primary text-sm font-bold tracking-wider mb-1">JAPAN</p>
+          <h3 class="text-2xl font-display text-white mb-4">Kyoto</h3>
+          <button class="w-full py-3 rounded-full border border-white/30 text-white text-sm font-semibold hover:bg-white hover:text-black transition-colors backdrop-blur-sm">EXPLORE</button>
+        </div>
+      </div>
+      <!-- Add more default cards if destinations is empty -->
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="py-24 bg-surface">
+  <div class="container mx-auto px-6 md:px-12">
+    <div class="text-center mb-16">
+      <h2 class="font-display text-4xl text-on-surface mb-4">HOW IT WORKS</h2>
+      <p class="text-muted max-w-2xl mx-auto">Your next journey is just three steps away.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+      <!-- Step 1 -->
+      <div class="flex flex-col items-center">
+        <div class="w-20 h-20 rounded-full bg-surface-high flex items-center justify-center mb-6 shadow-lg">
+          <span class="material-symbols-outlined text-4xl text-primary">map</span>
+        </div>
+        <h3 class="text-2xl font-display text-on-surface mb-3">Plan</h3>
+        <p class="text-muted">Set your dates, budget, and preferences. Our intelligent system crafts the perfect itinerary.</p>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="flex flex-col items-center">
+        <div class="w-20 h-20 rounded-full bg-surface-high flex items-center justify-center mb-6 shadow-lg">
+          <span class="material-symbols-outlined text-4xl text-secondary">explore</span>
+        </div>
+        <h3 class="text-2xl font-display text-on-surface mb-3">Explore</h3>
+        <p class="text-muted">Discover hidden gems and local favorites tailored specifically to your travel style.</p>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="flex flex-col items-center">
+        <div class="w-20 h-20 rounded-full bg-surface-high flex items-center justify-center mb-6 shadow-lg">
+          <span class="material-symbols-outlined text-4xl text-tertiary">flight_takeoff</span>
+        </div>
+        <h3 class="text-2xl font-display text-on-surface mb-3">Journey</h3>
+        <p class="text-muted">Embark on your seamless, multi-city adventure with all details meticulously organized.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
